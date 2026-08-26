@@ -64,7 +64,17 @@ const MOCK_TRIPS = [
 
 // Initialize State in localStorage or memory
 let tripsState = JSON.parse(localStorage.getItem('tripflow_trips')) || MOCK_TRIPS;
+
+// One-time cleanup: remove test "Maracaibo" trips
+tripsState = tripsState.filter(t => !t.name.toLowerCase().includes('maracaibo'));
+localStorage.setItem('tripflow_trips', JSON.stringify(tripsState));
+
 let currentTripId = localStorage.getItem('tripflow_current_trip_id') || 'cancun';
+
+// Ensure current trip exists after potential cleanup
+if (!tripsState.find(t => t.id === currentTripId) && tripsState.length > 0) {
+  currentTripId = tripsState[0].id;
+}
 
 function saveToStorage() {
   localStorage.setItem('tripflow_trips', JSON.stringify(tripsState));
@@ -84,6 +94,65 @@ export function setCurrentTrip(id) {
   saveToStorage();
 }
 
+// Helper to dynamically calculate chart data from expenses
+function recalculateChartData(trip) {
+  const dailyTotals = {};
+  trip.expenses.forEach(exp => {
+    if (!dailyTotals[exp.date]) {
+      dailyTotals[exp.date] = 0;
+    }
+    dailyTotals[exp.date] += exp.amount;
+  });
+
+  // Extract unique dates that have expenses
+  const dates = Object.keys(dailyTotals);
+
+  // Helper to parse UI date string to a real Date object for sorting
+  function parseDateForSort(dateStr) {
+    if (dateStr === 'Hoy') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return today;
+    }
+    // Expected format: "Lunes - 24/08/26" or "24/08/26"
+    let dStr = dateStr;
+    if (dStr.includes(' - ')) {
+      dStr = dStr.split(' - ')[1];
+    }
+    const parts = dStr.split('/');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      let year = parseInt(parts[2], 10);
+      if (year < 100) year += 2000;
+      return new Date(year, month, day);
+    }
+    return new Date(0); // Fallback
+  }
+
+  // Sort dates chronologically (oldest to newest)
+  dates.sort((a, b) => parseDateForSort(a) - parseDateForSort(b));
+
+  // Take up to 5 dates to display in chart
+  // If we have more than 5, we can take the 5 most recent (slice(-5))
+  let chartDates = dates.slice(-5);
+  
+  // Create chartData
+  const chartData = {};
+  chartDates.forEach(d => {
+    chartData[d] = dailyTotals[d];
+  });
+
+  // Pad with empty strings if less than 5 to maintain the 5-bar UI structure
+  while (chartDates.length < 5) {
+    // Add empty slots to the beginning so the actual dates are on the right
+    chartDates.unshift('');
+  }
+
+  trip.chartDates = chartDates;
+  trip.chartData = chartData;
+}
+
 export function addExpense(expenseData) {
   const currentTrip = getCurrentTrip();
   if (!currentTrip) return;
@@ -100,26 +169,8 @@ export function addExpense(expenseData) {
   // Add to expense log
   currentTrip.expenses.unshift(newExpense);
 
-  // Update chart data mapping
-  // Map standard readable date keys for the chart. Let's find which chart day corresponds.
-  // In a real app we'd map timestamps, here we map simple keys.
-  // If the expense date matches or is "Hoy", map to the active chart day (3rd element usually).
-  let chartDay = currentTrip.chartDates[2]; // Default to today
-  if (expenseData.date && expenseData.date.includes('/')) {
-    // If it has date format like 25/08/26, extract corresponding label:
-    // Simple mock logic:
-    if (expenseData.date.startsWith('24')) chartDay = currentTrip.chartDates[0];
-    else if (expenseData.date.startsWith('25')) chartDay = currentTrip.chartDates[1];
-    else if (expenseData.date.startsWith('26')) chartDay = currentTrip.chartDates[2];
-    else if (expenseData.date.startsWith('27')) chartDay = currentTrip.chartDates[3];
-    else if (expenseData.date.startsWith('28')) chartDay = currentTrip.chartDates[4];
-  }
-
-  if (currentTrip.chartData[chartDay] !== undefined) {
-    currentTrip.chartData[chartDay] += newExpense.amount;
-  } else {
-    currentTrip.chartData[chartDay] = newExpense.amount;
-  }
+  // Dynamically recalculate chart data based on all expenses
+  recalculateChartData(currentTrip);
 
   saveToStorage();
   return newExpense;
@@ -132,25 +183,48 @@ export function deleteExpense(expenseId) {
   const expenseIndex = currentTrip.expenses.findIndex(e => e.id === expenseId);
   if (expenseIndex === -1) return;
 
-  const expense = currentTrip.expenses[expenseIndex];
-  
-  // Subtract from chart data
-  let chartDay = currentTrip.chartDates[2]; // Default
-  if (expense.date === 'Hoy') {
-    chartDay = currentTrip.chartDates[2];
-  } else if (expense.date.includes('24') || expense.date.includes('05') || expense.date.includes('12')) {
-    chartDay = currentTrip.chartDates[0];
-  } else if (expense.date.includes('25') || expense.date.includes('06') || expense.date.includes('13')) {
-    chartDay = currentTrip.chartDates[1];
-  } else if (expense.date.includes('26') || expense.date.includes('07') || expense.date.includes('14')) {
-    chartDay = currentTrip.chartDates[2];
-  }
-
-  if (currentTrip.chartData[chartDay]) {
-    currentTrip.chartData[chartDay] = Math.max(0, currentTrip.chartData[chartDay] - expense.amount);
-  }
-
   currentTrip.expenses.splice(expenseIndex, 1);
+  
+  // Dynamically recalculate chart data
+  recalculateChartData(currentTrip);
+
+  saveToStorage();
+}
+
+export function addTrip({ destination, budget, startDate, endDate }) {
+  const id = `trip_${Date.now()}`;
+  const newTrip = {
+    id,
+    name: destination,
+    dates: `${startDate} a ${endDate}`,
+    totalBudget: budget,
+    expenses: [],
+    chartDates: ['', '', '', '', ''], // Will populate dynamically as expenses are added
+    chartData: {}
+  };
+  tripsState.unshift(newTrip);
+  currentTripId = id;
+  saveToStorage();
+  return newTrip;
+}
+
+export function deleteTrip(tripId) {
+  const index = tripsState.findIndex(t => t.id === tripId);
+  if (index === -1) return;
+
+  tripsState.splice(index, 1);
+
+  if (tripsState.length > 0) {
+    // If the deleted trip was the current one, select the first available
+    if (currentTripId === tripId) {
+      currentTripId = tripsState[0].id;
+    }
+  } else {
+    // If we deleted the last trip, reset to MOCK_TRIPS to avoid breaking the app
+    resetData();
+    return;
+  }
+  
   saveToStorage();
 }
 

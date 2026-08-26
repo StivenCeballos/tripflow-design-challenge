@@ -66,10 +66,16 @@ export function HeaderComponent(trip) {
           <div class="trip-dates">${trip.dates}</div>
         </div>
         
-        <button class="btn-primary" id="open-expense-modal-btn">
-          <span>Registrar gasto</span>
-          <img src="/icons/plus.png" alt="+" style="width: 16px; height: 16px;" />
-        </button>
+        <div class="header-actions">
+          <button class="btn-primary" id="open-expense-modal-btn">
+            <span>Registrar gasto</span>
+            <img src="/icons/plus.png" alt="+" style="width: 16px; height: 16px;" />
+          </button>
+          <button class="btn-icon-danger" id="open-delete-trip-modal-btn" title="Eliminar viaje" style="display: flex; align-items: center; justify-content: center;">
+            <img src="/icons/trash can.png" alt="Eliminar" style="width: 20px; height: 20px;" class="trash-icon-default" />
+            <img src="/icons/white trash can.png" alt="Eliminar" style="width: 20px; height: 20px;" class="trash-icon-hover" />
+          </button>
+        </div>
       </div>
     </header>
   `;
@@ -88,6 +94,20 @@ export function BudgetSummaryComponent(trip) {
   // Format decimals for the Figma ".00" gray styling requirement
   const availableStr = availableBudget.toFixed(2);
   const [availInt, availDec] = availableStr.split('.');
+  let alertHtml = '';
+  if (spentPercentage >= 80) {
+    alertHtml = `
+      <div class="budget-alert" id="budget-warning-alert">
+        <div class="alert-left">
+          <img src="/icons/caution.png" alt="Precaución" class="alert-icon" />
+          <span class="alert-text">Estás muy cerca de tu límite. Te quedan <strong class="alert-critical">${availableStr} USD</strong>.</span>
+        </div>
+        <button class="alert-close-btn" id="close-alert-btn">
+          <img src="/icons/Close.png" alt="Cerrar" class="alert-close-img" />
+        </button>
+      </div>
+    `;
+  }
 
   return `
     <div class="balance-card">
@@ -105,6 +125,7 @@ export function BudgetSummaryComponent(trip) {
           <div class="budget-progress-text">
             Has gastado <span>$${totalSpent.toFixed(0)}</span> de $${trip.totalBudget.toFixed(0)}
           </div>
+          ${alertHtml}
         </div>
       </div>
     </div>
@@ -134,7 +155,12 @@ export function ExpenseChartComponent(trip) {
 
   // Build the date labels
   const dateLabelsHtml = trip.chartDates.map(dateKey => {
-    return `<span class="chart-date-label">${dateKey}</span>`;
+    // If date is like "Lunes - 24/08/26", strip the "Lunes - " part.
+    let displayDate = dateKey;
+    if (displayDate.includes(' - ')) {
+      displayDate = displayDate.split(' - ')[1];
+    }
+    return `<span class="chart-date-label">${displayDate}</span>`;
   }).join('');
 
   return `
@@ -229,14 +255,20 @@ export function ExpenseListComponent(trip) {
         <div class="expense-item" data-id="${expense.id}">
           <div class="expense-item-left">
             <div class="expense-category-circle category-${expense.categoryKey}">
-              <img src="${iconSrc}" alt="icon" style="width: 31px; height: 31px; object-fit: contain;" />
+              <img src="${iconSrc}" alt="icon" style="width: 25px; height: 25px; object-fit: contain;" />
             </div>
             <div class="expense-info">
               <span class="expense-name">${expense.name}</span>
               <span class="expense-category-name">${expense.category}</span>
             </div>
           </div>
-          <span class="expense-amount">- $${expense.amount.toFixed(2)}</span>
+          <div class="expense-item-right">
+            <span class="expense-amount">- $${expense.amount.toFixed(2)}</span>
+            <button class="expense-delete-btn btn-icon-danger" data-id="${expense.id}" title="Eliminar gasto" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+              <img src="/icons/trash can.png" alt="Eliminar" style="width: 20px; height: 20px;" class="trash-icon-default" />
+              <img src="/icons/white trash can.png" alt="Eliminar" style="width: 20px; height: 20px;" class="trash-icon-hover" />
+            </button>
+          </div>
         </div>
       `;
     }).join('');
@@ -263,7 +295,7 @@ export function ExpenseListComponent(trip) {
 }
 
 /**
- * Renders the Expense Addition Modal
+ * Renders the Expense Addition Modal — Figma matching (node 14:3435)
  * @returns {string} HTML string
  */
 export function ExpenseModalComponent() {
@@ -271,60 +303,202 @@ export function ExpenseModalComponent() {
     <div class="modal-overlay" id="expense-modal-overlay">
       <div class="modal-container">
         <div class="modal-header">
-          <h3 class="modal-title">Registrar gasto</h3>
+          <div class="modal-header-left">
+            <img src="/icons/coins.png" alt="Registrar" style="width: 24px; height: 24px;" />
+            <h3 class="modal-title">Registrar gasto</h3>
+          </div>
           <button class="modal-close-btn" id="close-expense-modal-btn">
-            <i class="ph ph-x"></i>
+            <img src="/icons/Close.png" alt="Cerrar" style="width: 16px; height: 16px;" />
           </button>
         </div>
+
         <form id="add-expense-form">
           <div class="modal-body">
-            
-            <div class="form-group">
-              <label class="form-label" for="expense-name-input">Nombre del gasto</label>
-              <input class="form-input" id="expense-name-input" type="text" placeholder="Escribe el nombre del gasto" required />
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="expense-amount-input">Monto (USD)</label>
-                <input class="form-input" id="expense-amount-input" type="number" min="0.01" step="0.01" placeholder="0.00" required />
-              </div>
+            <div class="modal-fields">
 
               <div class="form-group">
-                <label class="form-label" for="expense-date-input">Fecha</label>
-                <input class="form-input" id="expense-date-input" type="text" placeholder="DD/MM/AA" required />
+                <label class="form-label" for="expense-name-input">Nombre del gasto</label>
+                <input class="form-input" id="expense-name-input" type="text" placeholder="Escribe el nombre del gasto" required />
               </div>
-            </div>
 
-            <div class="form-group">
-              <label class="form-label">Categoría</label>
-              <div class="category-selector">
-                <div class="category-trigger" id="category-trigger-btn">
-                  <span class="category-trigger-text placeholder" id="category-trigger-label">Selecciona una categoría</span>
-                  <img src="/icons/chevron.png" alt="v" style="width: 20px; height: 20px;" />
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="expense-amount-input">Monto</label>
+                  <input class="form-input" id="expense-amount-input" type="number" min="0.01" step="0.01" placeholder="0.00" required />
                 </div>
-                <div class="category-options-dropdown" id="category-options">
-                  <button type="button" class="category-option-btn" data-value="Alimentación" data-key="food">
-                    <img src="/icons/Burger.png" alt="food" style="width: 20px; height: 20px;" /> Alimentación
-                  </button>
-                  <button type="button" class="category-option-btn" data-value="Compras" data-key="shopping">
-                    <img src="/icons/Bag.png" alt="shopping" style="width: 20px; height: 20px;" /> Compras
-                  </button>
-                  <button type="button" class="category-option-btn" data-value="Transporte" data-key="transportation">
-                    <img src="/icons/car.png" alt="transport" style="width: 20px; height: 20px;" /> Transporte
-                  </button>
+                <div class="form-group">
+                  <label class="form-label" for="expense-date-input">Fecha</label>
+                  <input class="form-input" id="expense-date-input" type="date" required />
                 </div>
               </div>
-              <input type="hidden" id="expense-category-value" required />
-              <input type="hidden" id="expense-category-key" required />
-            </div>
 
+              <div class="form-group">
+                <label class="form-label">Categoría</label>
+                <div class="category-selector">
+                  <div class="category-trigger" id="category-trigger-btn">
+                    <div class="category-trigger-content">
+                      <img id="category-trigger-icon" src="" alt="" style="width: 20px; height: 20px; display: none; object-fit: contain;" />
+                      <span class="category-trigger-text placeholder" id="category-trigger-label">Selecciona una categoría</span>
+                    </div>
+                    <i class="ph ph-caret-down" style="font-size: 18px; color: var(--color-black);"></i>
+                  </div>
+                  <div class="category-options-dropdown" id="category-options">
+                    <button type="button" class="category-option-btn" data-value="Alimentación" data-key="food" data-icon="/icons/Burger.png">
+                      <img src="/icons/Burger.png" alt="food" style="width: 20px; height: 20px;" /> Alimentación
+                    </button>
+                    <button type="button" class="category-option-btn" data-value="Compras" data-key="shopping" data-icon="/icons/Bag.png">
+                      <img src="/icons/Bag.png" alt="shopping" style="width: 20px; height: 20px;" /> Compras
+                    </button>
+                    <button type="button" class="category-option-btn" data-value="Transporte" data-key="transportation" data-icon="/icons/car.png">
+                      <img src="/icons/car.png" alt="transport" style="width: 20px; height: 20px;" /> Transporte
+                    </button>
+                  </div>
+                </div>
+                <input type="hidden" id="expense-category-value" required />
+                <input type="hidden" id="expense-category-key" required />
+              </div>
+
+            </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn-secondary" id="cancel-expense-modal-btn">Cancelar</button>
-            <button type="submit" class="btn-primary">Registrar</button>
+
+          <div class="modal-actions">
+            <button type="button" class="modal-cancel-btn" id="cancel-expense-modal-btn">Cancelar</button>
+            <button type="submit" class="modal-submit-btn" id="expense-submit-btn">Registrar gasto</button>
           </div>
         </form>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Renders the Create New Trip Modal — Figma matching (node 14:3365)
+ * @returns {string} HTML string
+ */
+export function CreateTripModalComponent() {
+  return `
+    <div class="modal-overlay" id="create-trip-modal-overlay">
+      <div class="modal-container">
+        <div class="modal-header">
+          <div class="modal-header-left">
+            <img src="/icons/pink plane.png" alt="Viaje" style="width: 24px; height: 24px;" />
+            <h3 class="modal-title">Crear un nuevo viaje</h3>
+          </div>
+          <button class="modal-close-btn" id="close-create-trip-modal-btn">
+            <img src="/icons/Close.png" alt="Cerrar" style="width: 16px; height: 16px;" />
+          </button>
+        </div>
+
+        <form id="create-trip-form">
+          <div class="modal-body">
+            <p class="modal-subtitle">Completa los campos para crear un nuevo presupuesto de viajes.</p>
+
+            <div class="modal-fields">
+
+              <div class="form-group">
+                <label class="form-label" for="trip-destination-input">Lugar de destino</label>
+                <input class="form-input" id="trip-destination-input" type="text" placeholder="Escribe el destino" required />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group" style="flex: 3;">
+                  <label class="form-label" for="trip-budget-input">Presupuesto total</label>
+                  <input class="form-input" id="trip-budget-input" type="number" min="1" step="0.01" placeholder="0.00" required />
+                </div>
+                <div class="form-currency-group">
+                  <label class="form-label">Moneda</label>
+                  <div class="form-currency-trigger">
+                    <span>USD</span>
+                    <i class="ph ph-caret-down" style="font-size: 16px;"></i>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="trip-start-date-input">Fecha de inicio</label>
+                  <input class="form-input" id="trip-start-date-input" type="date" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="trip-end-date-input">Fecha final</label>
+                  <input class="form-input" id="trip-end-date-input" type="date" required />
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="modal-cancel-btn" id="cancel-create-trip-btn">Cancelar</button>
+            <button type="submit" class="modal-submit-btn" id="create-trip-submit-btn">Crear viaje</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Renders the Delete Trip Confirmation Modal
+ * @returns {string} HTML string
+ */
+export function DeleteTripModalComponent() {
+  return `
+    <div class="modal-overlay" id="delete-trip-modal-overlay">
+      <div class="modal-container" style="max-width: 450px;">
+        <div class="modal-header">
+          <div class="modal-header-left">
+            <img src="/icons/Pink trash can.png" alt="Eliminar" style="width: 24px; height: 24px;" />
+            <h3 class="modal-title">Eliminar viaje</h3>
+          </div>
+          <button class="modal-close-btn" id="close-delete-trip-modal-btn">
+            <img src="/icons/Close.png" alt="Cerrar" style="width: 16px; height: 16px;" />
+          </button>
+        </div>
+
+        <div class="modal-body" style="padding-top: 16px;">
+          <p class="modal-subtitle" style="margin-bottom: 0;">¿Estás seguro de que deseas eliminar este viaje? Esta acción no se puede deshacer y se borrarán todos los gastos registrados en él.</p>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 32px;">
+          <button type="button" class="modal-cancel-btn" id="cancel-delete-trip-btn">Cancelar</button>
+          <button type="button" class="modal-submit-btn active" id="confirm-delete-trip-btn" style="background-color: var(--color-pink);">
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Renders the Delete Expense Confirmation Modal
+ * @returns {string} HTML string
+ */
+export function DeleteExpenseModalComponent() {
+  return `
+    <div class="modal-overlay" id="delete-expense-modal-overlay">
+      <div class="modal-container" style="max-width: 450px;">
+        <div class="modal-header">
+          <div class="modal-header-left">
+            <img src="/icons/Pink trash can.png" alt="Eliminar" style="width: 24px; height: 24px;" />
+            <h3 class="modal-title">Eliminar gasto</h3>
+          </div>
+          <button class="modal-close-btn" id="close-delete-expense-modal-btn">
+            <img src="/icons/Close.png" alt="Cerrar" style="width: 16px; height: 16px;" />
+          </button>
+        </div>
+
+        <div class="modal-body" style="padding-top: 16px;">
+          <p class="modal-subtitle" style="margin-bottom: 0;">¿Estás seguro de que deseas eliminar este gasto? Esta acción no se puede deshacer.</p>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 32px;">
+          <button type="button" class="modal-cancel-btn" id="cancel-delete-expense-btn">Cancelar</button>
+          <button type="button" class="modal-submit-btn active" id="confirm-delete-expense-btn" style="background-color: var(--color-pink);">
+            Eliminar
+          </button>
+        </div>
       </div>
     </div>
   `;
