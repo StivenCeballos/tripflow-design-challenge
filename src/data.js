@@ -25,49 +25,45 @@ const MOCK_TRIPS = [
   {
     id: 'paris',
     name: 'París',
-    dates: 'Oct/12/26 a Oct/20/26',
+    dates: 'Jul/12/26 a Jul/20/26',
     totalBudget: 1500,
     expenses: [
-      { id: 1, name: "Louvre Museum", category: "Compras", categoryKey: "shopping", amount: 40.00, date: "Hoy" },
-      { id: 2, name: "Metro Pass", category: "Transporte", categoryKey: "transportation", amount: 15.00, date: "Martes - 13/10/26" },
-      { id: 3, name: "Bistro dinner", category: "Alimentación", categoryKey: "food", amount: 65.00, date: "Lunes - 12/10/26" }
+      { id: 1, name: "Louvre Museum", category: "Compras", categoryKey: "shopping", amount: 40.00, date: "Miércoles - 15/07/26" },
+      { id: 2, name: "Metro Pass", category: "Transporte", categoryKey: "transportation", amount: 15.00, date: "Martes - 14/07/26" },
+      { id: 3, name: "Bistro dinner", category: "Alimentación", categoryKey: "food", amount: 65.00, date: "Lunes - 13/07/26" }
     ],
-    chartDates: ["12 Oct", "13 Oct", "14 Oct", "15 Oct", "16 Oct"],
+    chartDates: ["13 Jul", "14 Jul", "15 Jul"],
     chartData: {
-      "12 Oct": 65,
-      "13 Oct": 15,
-      "14 Oct": 40,
-      "15 Oct": 0,
-      "16 Oct": 0
+      "13 Jul": 65,
+      "14 Jul": 15,
+      "15 Jul": 40
     }
   },
   {
     id: 'tokyo',
     name: 'Tokio',
-    dates: 'Dic/05/26 a Dic/15/26',
+    dates: 'Jun/05/26 a Jun/15/26',
     totalBudget: 2000,
     expenses: [
-      { id: 1, name: "Sushi lunch", category: "Alimentación", categoryKey: "food", amount: 80.00, date: "Hoy" },
-      { id: 2, name: "Souvenirs Shinjuku", category: "Compras", categoryKey: "shopping", amount: 150.00, date: "Martes - 06/12/26" },
-      { id: 3, name: "Bullet Train Ticket", category: "Transporte", categoryKey: "transportation", amount: 120.00, date: "Lunes - 05/12/26" }
+      { id: 1, name: "Sushi lunch", category: "Alimentación", categoryKey: "food", amount: 80.00, date: "Miércoles - 07/06/26" },
+      { id: 2, name: "Souvenirs Shinjuku", category: "Compras", categoryKey: "shopping", amount: 150.00, date: "Martes - 06/06/26" },
+      { id: 3, name: "Bullet Train Ticket", category: "Transporte", categoryKey: "transportation", amount: 120.00, date: "Lunes - 05/06/26" }
     ],
-    chartDates: ["05 Dic", "06 Dic", "07 Dic", "08 Dic", "09 Dic"],
+    chartDates: ["05 Jun", "06 Jun", "07 Jun"],
     chartData: {
-      "05 Dic": 120,
-      "06 Dic": 150,
-      "07 Dic": 80,
-      "08 Dic": 0,
-      "09 Dic": 0
+      "05 Jun": 120,
+      "06 Jun": 150,
+      "07 Jun": 80
     }
   }
 ];
 
 // Initialize State in localStorage or memory
-let tripsState = JSON.parse(localStorage.getItem('tripflow_trips')) || MOCK_TRIPS;
+let tripsState = JSON.parse(localStorage.getItem('tripflow_trips_v2')) || MOCK_TRIPS;
 
 // One-time cleanup: remove test "Maracaibo" trips
 tripsState = tripsState.filter(t => !t.name.toLowerCase().includes('maracaibo'));
-localStorage.setItem('tripflow_trips', JSON.stringify(tripsState));
+localStorage.setItem('tripflow_trips_v2', JSON.stringify(tripsState));
 
 let currentTripId = localStorage.getItem('tripflow_current_trip_id') || 'cancun';
 
@@ -77,7 +73,7 @@ if (!tripsState.find(t => t.id === currentTripId) && tripsState.length > 0) {
 }
 
 function saveToStorage() {
-  localStorage.setItem('tripflow_trips', JSON.stringify(tripsState));
+  localStorage.setItem('tripflow_trips_v2', JSON.stringify(tripsState));
   localStorage.setItem('tripflow_current_trip_id', currentTripId);
 }
 
@@ -96,25 +92,37 @@ export function setCurrentTrip(id) {
 
 // Helper to dynamically calculate chart data from expenses
 function recalculateChartData(trip) {
-  const dailyTotals = {};
-  trip.expenses.forEach(exp => {
-    if (!dailyTotals[exp.date]) {
-      dailyTotals[exp.date] = 0;
+  const MONTHS = {
+    'Ene': 0, 'Feb': 1, 'Mar': 2, 'Abr': 3, 'May': 4, 'Jun': 5,
+    'Jul': 6, 'Ago': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dic': 11
+  };
+
+  function parseTripBound(dateStr) {
+    if (dateStr.includes('-')) {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      }
     }
-    dailyTotals[exp.date] += exp.amount;
-  });
+    if (dateStr.includes('/')) {
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const m = MONTHS[parts[0]];
+        const d = parseInt(parts[1], 10);
+        let y = parseInt(parts[2], 10);
+        if (y < 100) y += 2000;
+        return new Date(y, m, d);
+      }
+    }
+    return new Date(0);
+  }
 
-  // Extract unique dates that have expenses
-  const dates = Object.keys(dailyTotals);
-
-  // Helper to parse UI date string to a real Date object for sorting
-  function parseDateForSort(dateStr) {
+  function parseExpenseDate(dateStr) {
     if (dateStr === 'Hoy') {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       return today;
     }
-    // Expected format: "Lunes - 24/08/26" or "24/08/26"
     let dStr = dateStr;
     if (dStr.includes(' - ')) {
       dStr = dStr.split(' - ')[1];
@@ -127,26 +135,65 @@ function recalculateChartData(trip) {
       if (year < 100) year += 2000;
       return new Date(year, month, day);
     }
-    return new Date(0); // Fallback
+    return new Date(0);
   }
 
-  // Sort dates chronologically (oldest to newest)
-  dates.sort((a, b) => parseDateForSort(a) - parseDateForSort(b));
+  function formatShortDate(dateObj) {
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const mmm = monthNames[dateObj.getMonth()];
+    return `${dd} ${mmm}`;
+  }
 
-  // Take up to 5 dates to display in chart
-  // If we have more than 5, we can take the 5 most recent (slice(-5))
-  let chartDates = dates.slice(-5);
-  
-  // Create chartData
-  const chartData = {};
-  chartDates.forEach(d => {
-    chartData[d] = dailyTotals[d];
+  // Parse trip boundaries
+  const bounds = trip.dates.split(' a ');
+  const tripStart = parseTripBound(bounds[0]);
+  const tripEnd = bounds.length > 1 ? parseTripBound(bounds[1]) : new Date(tripStart);
+
+  // Parse expense dates and sum amounts
+  const expenseMap = new Map();
+  let maxExpenseDate = new Date(tripStart);
+
+  trip.expenses.forEach(exp => {
+    const d = parseExpenseDate(exp.date);
+    // Only process expenses that belong to or fall within the trip logically
+    // To be safe, we just sum them by normalized time
+    const t = d.getTime();
+    if (t > maxExpenseDate.getTime() && t <= tripEnd.getTime()) {
+      maxExpenseDate = new Date(t);
+    }
+    expenseMap.set(t, (expenseMap.get(t) || 0) + exp.amount);
   });
 
-  // Pad with empty strings if less than 5 to maintain the 5-bar UI structure
-  while (chartDates.length < 5) {
-    // Add empty slots to the beginning so the actual dates are on the right
-    chartDates.unshift('');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Determine the end of the range to display
+  // Min of (Trip End) and Max of (Today, maxExpenseDate)
+  let rangeEnd = new Date(today);
+  if (maxExpenseDate > rangeEnd) {
+    rangeEnd = new Date(maxExpenseDate);
+  }
+  if (rangeEnd > tripEnd) {
+    rangeEnd = new Date(tripEnd);
+  }
+  if (rangeEnd < tripStart) {
+    rangeEnd = new Date(tripStart); // Edge case if trip is completely in the future
+  }
+
+  const chartDates = [];
+  const chartData = {};
+
+  // Generate sequence of days
+  let curr = new Date(tripStart);
+  while (curr <= rangeEnd) {
+    const t = curr.getTime();
+    const shortLabel = formatShortDate(curr);
+    
+    chartDates.push(shortLabel);
+    chartData[shortLabel] = expenseMap.get(t) || 0;
+    
+    curr.setDate(curr.getDate() + 1);
   }
 
   trip.chartDates = chartDates;

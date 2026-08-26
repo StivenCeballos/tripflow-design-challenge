@@ -138,29 +138,91 @@ export function BudgetSummaryComponent(trip) {
  * @returns {string} HTML string
  */
 export function ExpenseChartComponent(trip) {
-  const chartHeightMax = 160; // Equivalent to the absolute overlay grid height (160px)
-  const rangeMax = 100; // Figma range scale goes up to $100
+  const chartHeightMax = 160;
 
-  // Build the bars HTML
-  const barsHtml = trip.chartDates.map(dateKey => {
+  // Determine dynamic range
+  const maxVal = Math.max(0, ...Object.values(trip.chartData));
+  
+  // Calculate a nice step size for 5 grid increments
+  let step = Math.ceil(maxVal / 5);
+  if (step === 0) step = 20; // Default if empty
+  
+  // Round up to nearest nice number
+  const order = Math.pow(10, Math.floor(Math.log10(step)));
+  let niceStep = Math.ceil(step / order) * order;
+  const rangeMax = niceStep * 5;
+
+  // Find the index of the last registered expense to prevent collapsing future dates
+  let lastExpenseIdx = -1;
+  for (let i = trip.chartDates.length - 1; i >= 0; i--) {
+    if (trip.chartData[trip.chartDates[i]] > 0) {
+      lastExpenseIdx = i;
+      break;
+    }
+  }
+
+  // Process visual items to compress empty days
+  const visualItems = [];
+  let zeroBuffer = [];
+
+  for (let i = 0; i < trip.chartDates.length; i++) {
+    const dateKey = trip.chartDates[i];
     const val = trip.chartData[dateKey] || 0;
-    // Calculate relative height in pixels
-    const barHeight = Math.min(chartHeightMax, (val / rangeMax) * chartHeightMax);
+    const isAfterLastExpense = i > lastExpenseIdx;
+
+    if (val === 0 && !isAfterLastExpense) {
+      zeroBuffer.push(dateKey);
+    } else {
+      if (zeroBuffer.length > 0) {
+        if (zeroBuffer.length <= 3) {
+          zeroBuffer.forEach(d => visualItems.push({ type: 'day', dateKey: d, val: 0 }));
+        } else {
+          const rangeStr = `${zeroBuffer[0]} a ${zeroBuffer[zeroBuffer.length - 1]}`;
+          visualItems.push({ type: 'ellipsis', dateKey: rangeStr, val: 0 });
+        }
+        zeroBuffer = [];
+      }
+      visualItems.push({ type: 'day', dateKey, val });
+    }
+  }
+
+  // Generate Grid Background (Y-axis labels and horizontal dashed lines)
+  const gridRowsHtml = [5, 4, 3, 2, 1, 0].map((i, index) => {
+    const val = niceStep * i;
+    const row = index + 1; // grid row 1 to 6
     return `
-      <div class="chart-bar-container">
-        <div class="chart-bar" style="height: ${barHeight}px;" data-value="$${val.toFixed(2)}" title="${dateKey}: $${val.toFixed(2)}"></div>
-      </div>
+      <div class="chart-row-label" style="grid-row: ${row}; grid-column: 1;">$${val}</div>
+      <div class="chart-row-gridline" style="grid-row: ${row}; grid-column: 3 / -1;"></div>
     `;
   }).join('');
 
-  // Build the date labels
-  const dateLabelsHtml = trip.chartDates.map(dateKey => {
-    // If date is like "Lunes - 24/08/26", strip the "Lunes - " part.
-    let displayDate = dateKey;
-    if (displayDate.includes(' - ')) {
-      displayDate = displayDate.split(' - ')[1];
+  // X-axis label
+  const xAxisLabel = `<div class="chart-axis-title" style="grid-row: 7; grid-column: 1;">Fecha</div>`;
+
+  // Generate Foreground Columns (Bars + Date Labels)
+  const columnsHtml = visualItems.map((item, i) => {
+    const col = i + 3; // Start from column 3
+    const { dateKey, val } = item;
+    
+    // Bar
+    let barHeight = val === 0 ? 4 : Math.min(chartHeightMax, (val / rangeMax) * chartHeightMax);
+    if (barHeight < 4) barHeight = 4;
+    
+    const barHtml = `
+      <div class="chart-bar-container" style="grid-row: 1 / 7; grid-column: ${col};">
+        <div class="chart-bar" style="height: ${barHeight}px;" data-value="$${val.toFixed(0)}" title="${dateKey}: $${val.toFixed(0)}"></div>
+      </div>
+    `;
+    
+    // Label
+    let labelHtml;
+    if (item.type === 'ellipsis') {
+      labelHtml = `<div class="chart-date-label chart-date-ellipsis" data-tooltip="${dateKey}" style="grid-row: 7; grid-column: ${col};">···</div>`;
+    } else {
+      labelHtml = `<div class="chart-date-label" style="grid-row: 7; grid-column: ${col};">${dateKey}</div>`;
     }
-    return `<span class="chart-date-label">${displayDate}</span>`;
+    
+    return barHtml + labelHtml;
   }).join('');
 
   return `
@@ -168,41 +230,11 @@ export function ExpenseChartComponent(trip) {
       <div class="chart-header">
         <h3 class="card-title">Gastos diarios</h3>
       </div>
-      <div class="chart-body">
-        <div class="chart-row">
-          <span class="chart-row-label">$100</span>
-          <div class="chart-row-gridline"></div>
-        </div>
-        <div class="chart-row">
-          <span class="chart-row-label">$80</span>
-          <div class="chart-row-gridline"></div>
-        </div>
-        <div class="chart-row">
-          <span class="chart-row-label">$60</span>
-          <div class="chart-row-gridline"></div>
-        </div>
-        <div class="chart-row">
-          <span class="chart-row-label">$40</span>
-          <div class="chart-row-gridline"></div>
-        </div>
-        <div class="chart-row">
-          <span class="chart-row-label">$20</span>
-          <div class="chart-row-gridline"></div>
-        </div>
-        <div class="chart-row">
-          <span class="chart-row-label">$0</span>
-          <div class="chart-row-gridline"></div>
-          
-          <!-- Absolute Positioned Bars Overlay -->
-          <div class="chart-bars-overlay">
-            ${barsHtml}
-          </div>
-        </div>
-      </div>
-      <div class="chart-footer">
-        <span class="chart-axis-title">Fecha</span>
-        <div class="chart-dates-container">
-          ${dateLabelsHtml}
+      <div class="chart-scroll-wrapper">
+        <div class="chart-scroll-inner" style="grid-template-columns: 36px 11px repeat(${visualItems.length}, minmax(52px, 1fr));">
+          ${gridRowsHtml}
+          ${xAxisLabel}
+          ${columnsHtml}
         </div>
       </div>
     </div>
