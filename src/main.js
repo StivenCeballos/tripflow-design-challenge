@@ -19,8 +19,11 @@ import {
   ExpenseModalComponent,
   CreateTripModalComponent,
   DeleteTripModalComponent,
-  DeleteExpenseModalComponent
+  DeleteExpenseModalComponent,
+  MobileNavComponent
 } from './components.js';
+
+let currentTab = 'resumen';
 
 // Central render function to bind data and UI updates
 function renderApp() {
@@ -31,7 +34,7 @@ function renderApp() {
   // 1. Render layout shell structure
   appEl.innerHTML = `
     <div class="app-container">
-      ${SidebarComponent('resumen')}
+      ${SidebarComponent(currentTab)}
       <div class="main-content">
         <main class="dashboard-viewport">
           <div id="header-root"></div>
@@ -42,6 +45,13 @@ function renderApp() {
           <div id="expense-list-root"></div>
         </main>
       </div>
+      ${MobileNavComponent(currentTab)}
+      
+      <!-- Floating Action Button for Mobile -->
+      <button class="mobile-fab-btn" id="open-expense-modal-btn-mobile" title="Registrar gasto">
+        <span>Registrar gasto</span>
+        <img src="/icons/plus.png" alt="+" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" />
+      </button>
     </div>
     ${ExpenseModalComponent()}
     ${CreateTripModalComponent()}
@@ -54,6 +64,12 @@ function renderApp() {
   document.querySelector('#budget-summary-root').innerHTML = BudgetSummaryComponent(currentTrip);
   document.querySelector('#expense-chart-root').innerHTML = ExpenseChartComponent(currentTrip);
   document.querySelector('#expense-list-root').innerHTML = ExpenseListComponent(currentTrip);
+
+  // 2.5 Scroll chart wrapper to the right so that current/latest day is visible initially
+  const chartWrapper = document.querySelector('.chart-scroll-wrapper');
+  if (chartWrapper) {
+    chartWrapper.scrollLeft = chartWrapper.scrollWidth;
+  }
 
   // 3. Render trip selector dropdown options + "Crear nuevo viaje" button
   const dropdownEl = document.querySelector('#trip-dropdown');
@@ -76,6 +92,20 @@ function renderApp() {
 // Attach all interactive handlers and toggle actions
 function attachEventListeners() {
   const currentTrip = getCurrentTrip();
+
+  // Tab switching action
+  const navItems = document.querySelectorAll('.sidebar-nav-item, .mobile-nav-item');
+  navItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tab = item.getAttribute('data-tab');
+      currentTab = tab;
+      renderApp();
+      if (tab !== 'resumen') {
+        alert(`La vista "${tab.toUpperCase()}" no está disponible en este prototipo.`);
+      }
+    });
+  });
   
   // Trip Selector Dropdown toggle
   const tripBtn = document.querySelector('#trip-selector-btn');
@@ -109,13 +139,14 @@ function attachEventListeners() {
   }
 
   // Modal actions — Registrar Gasto
-  const openModalBtn = document.querySelector('#open-expense-modal-btn');
+  const openModalBtns = document.querySelectorAll('#open-expense-modal-btn, #open-expense-modal-btn-mobile');
   const closeModalBtn = document.querySelector('#close-expense-modal-btn');
   const modalOverlay = document.querySelector('#expense-modal-overlay');
 
-  if (openModalBtn && modalOverlay) {
-    openModalBtn.addEventListener('click', () => {
-      modalOverlay.classList.add('open');
+  if (openModalBtns.length > 0 && modalOverlay) {
+    openModalBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modalOverlay.classList.add('open');
       
       // Auto-populate Date field with today's date in YYYY-MM-DD (native date input format)
       const dateInput = document.querySelector('#expense-date-input');
@@ -135,12 +166,12 @@ function attachEventListeners() {
             const endY = tripEnd.getFullYear();
             const endM = String(tripEnd.getMonth() + 1).padStart(2, '0');
             const endD = String(tripEnd.getDate()).padStart(2, '0');
-            dateInput.max = `${endY}-${endM}-${endD}`;
           }
         }
       }
     });
-  }
+  });
+}
 
   const hideModal = () => {
     if (modalOverlay) {
@@ -312,7 +343,7 @@ function attachEventListeners() {
   if (cancelCreateTripBtn) cancelCreateTripBtn.addEventListener('click', hideCreateTripModal);
 
   // Modal actions — Eliminar Viaje
-  const openDeleteTripBtn = document.querySelector('#open-delete-trip-modal-btn');
+  const openDeleteTripBtns = document.querySelectorAll('#open-delete-trip-modal-btn, #open-delete-trip-modal-btn-mobile');
   const closeDeleteTripBtn = document.querySelector('#close-delete-trip-modal-btn');
   const cancelDeleteTripBtn = document.querySelector('#cancel-delete-trip-btn');
   const confirmDeleteTripBtn = document.querySelector('#confirm-delete-trip-btn');
@@ -322,9 +353,11 @@ function attachEventListeners() {
     if (deleteTripOverlay) deleteTripOverlay.classList.remove('open');
   };
 
-  if (openDeleteTripBtn) {
-    openDeleteTripBtn.addEventListener('click', () => {
-      if (deleteTripOverlay) deleteTripOverlay.classList.add('open');
+  if (openDeleteTripBtns.length > 0) {
+    openDeleteTripBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (deleteTripOverlay) deleteTripOverlay.classList.add('open');
+      });
     });
   }
 
@@ -465,17 +498,7 @@ function attachEventListeners() {
     }
   });
 
-  // Sidebar link clicks (simulating view tabs)
-  const navItems = document.querySelectorAll('.sidebar-nav-item');
-  navItems.forEach(item => {
-    item.addEventListener('click', (e) => {
-      e.preventDefault();
-      const tab = item.getAttribute('data-tab');
-      if (tab !== 'resumen') {
-        alert(`La vista "${tab.toUpperCase()}" no está disponible en este prototipo.`);
-      }
-    });
-  });
+  // Tab click alerts are handled at the top of attachEventListeners now
 
   // Reset button simulated on logout button click (for convenience)
   const logoutBtn = document.querySelector('#logout-btn');

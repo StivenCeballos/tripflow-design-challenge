@@ -54,6 +54,10 @@ export function SidebarComponent(activeTab = 'resumen') {
 export function HeaderComponent(trip) {
   return `
     <header class="header">
+      <div class="header-avatar-mobile">
+        <img src="/icons/User.png" alt="User" />
+      </div>
+      
       <span class="header-label">Viaje actual</span>
       <div class="header-row">
         <div class="trip-selector-container">
@@ -78,6 +82,11 @@ export function HeaderComponent(trip) {
           </button>
         </div>
       </div>
+
+      <button class="header-delete-mobile btn-icon-danger" id="open-delete-trip-modal-btn-mobile" title="Eliminar viaje">
+        <img src="/icons/trash can.png" alt="Eliminar" style="width: 20px; height: 20px;" class="trash-icon-default" />
+        <img src="/icons/white trash can.png" alt="Eliminar" style="width: 20px; height: 20px;" class="trash-icon-hover" />
+      </button>
     </header>
   `;
 }
@@ -549,5 +558,29 @@ export function DeleteExpenseModalComponent() {
         </div>
       </div>
     </div>
+  `;
+}
+
+/**
+ * Renders the Mobile Bottom Navigation Bar (Component 7)
+ * @param {string} activeTab 
+ * @returns {string} HTML string
+ */
+export function MobileNavComponent(activeTab = 'resumen') {
+  return `
+    <nav class="mobile-navbar">
+      <a href="#" class="mobile-nav-item ${activeTab === 'resumen' ? 'active' : ''}" data-tab="resumen">
+        <img src="/icons/Home.png" alt="Resumen" class="nav-icon" />
+        <span>Resumen</span>
+      </a>
+      <a href="#" class="mobile-nav-item ${activeTab === 'viajes' ? 'active' : ''}" data-tab="viajes">
+        <img src="/icons/${activeTab === 'viajes' ? 'pink plane.png' : 'plane.png'}" alt="Viajes" class="nav-icon" />
+        <span>Viajes</span>
+      </a>
+      <a href="#" class="mobile-nav-item ${activeTab === 'historial' ? 'active' : ''}" data-tab="historial">
+        <img src="/icons/book.png" alt="Historial" class="nav-icon" />
+        <span>Historial</span>
+      </a>
+    </nav>
   `;
 }

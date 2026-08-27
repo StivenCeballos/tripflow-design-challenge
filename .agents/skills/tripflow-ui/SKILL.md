@@ -175,12 +175,76 @@ The spacing system uses the following increments observed in Figma layout paddin
   - Grid & Labels: Same style, X-Axis labels container width `470px`.
   - Bars: Width `38px`. Colors, radius, and values same as mobile.
 
+#### 6b. Chart Implementation Details (Implemented Behavior)
+The chart implementation goes significantly beyond the static Figma spec. The following behaviors have been implemented and must be preserved:
+
+**Dynamic Y-axis scale:**
+- The Y-axis is NOT fixed at `$0–$100`. It scales automatically based on the maximum daily expense.
+- A `niceStep` is calculated by rounding `maxVal / 5` up to the nearest order of magnitude, producing clean round numbers (e.g., `$20`, `$50`, `$100`).
+- The grid always displays exactly 6 rows (5 increments), showing values `niceStep * 0` through `niceStep * 5`.
+- If no expenses exist, the default step is `$20`.
+
+**Date compression (ellipsis logic):**
+- Consecutive dates with `$0` spending that occur *before* the last registered expense are compressed.
+- If ≤ 2 zero-days in a row → shown individually as empty bars.
+- If ≥ 3 zero-days in a row → collapsed into a single `···` ellipsis column with a tooltip showing the date range.
+- Dates *after* the last expense are **not shown** (truncated from the chart).
+- The chart only renders columns up to and including the last date with a registered expense.
+
+**Bar rendering:**
+- Bar height is computed as `(val / rangeMax) * chartHeightMax` where `chartHeightMax = 160px`.
+- A minimum bar height of `4px` is enforced for days with `$0` to stay visually present.
+- Each bar has a `data-value` and `title` attribute showing the amount on hover.
+
+**CSS Grid layout:**
+- The chart uses a CSS Grid with `grid-template-columns: 36px 11px repeat(N, minmax(52px, 1fr))` where N = number of visual columns.
+- Column 1 = Y-axis labels, Column 2 = spacer, Columns 3+ = data bars + date labels.
+- Rows 1–6 = grid lines + bar containers, Row 7 = X-axis date labels.
+
+**Scrollable container:**
+- The chart is wrapped in `.chart-scroll-wrapper` (overflow-x: auto) to support horizontal scrolling when bars exceed the card width.
+- On initial render, the scroll is automatically set to `scrollLeft = scrollWidth` so the most recent dates are visible by default.
+
+**Category icon assets** (used in expense items, referenced by `categoryIconMap`):
+- `food` / `Alimentación`: `/icons/Hamburger.png`
+- `shopping` / `Compras`: `/icons/Shopping bag.png`
+- `transportation` / `Transporte`: `/icons/Car.png`
+- Other/default: `/icons/Engine.png`
+
 ### 7. Mobile Nav Bar
 - **Structure**: Bottom fixed navigation bar. Width `360px`, Padding `12px 16px`, justify-content `space-between`, Background `white` (`#FFFFFF`), Top border `1px solid gray` (`#C8CFDF`).
 - **Items**: 3 navigation items in column layout, width `80px`, gap `1px`, items center.
   - **Active ("Resumen")**: Icon `24px x 24px` in `Pink` (`#D92D6F`), Label text "Resumen" in Font `Caption XS Bold`, Color `Pink`.
   - **Inactive ("Viajes")**: Icon `24px x 24px` in `gray dark` (`#9CA7BF`), Label text "Viajes" in Font `Caption XS`, Color `gray dark`.
   - **Inactive ("Historial")**: Icon `24px x 24px` in `gray dark` (`#9CA7BF`), Label text "Historial" in Font `Caption XS`, Color `gray dark`.
+- **Icon Assets** (IMPORTANT — uses local image files, NOT Phosphor icons on mobile):
+  - Resumen: `/icons/Home.png` (apply CSS pink filter when active)
+  - Viajes active: `/icons/pink plane.png`, inactive: `/icons/plane.png`
+  - Historial: `/icons/book.png` (apply CSS pink filter when active)
+
+### 7b. Mobile Header — Delete Trip Button (`header-delete-mobile`)
+- **Placement**: Right side of the mobile `<header>`, opposite the user avatar.
+- **Only visible on mobile** (`display: none` on desktop via global rule).
+- **Visual spec**:
+  - Container: `36px x 36px`, Border Radius `12px` (`var(--radius-md)`), Background `#ffe6eb` (pink light tint).
+  - Icon (default state): `/icons/trash can.png`, `20px x 20px`.
+  - Icon (hover state): `/icons/white trash can.png`, `20px x 20px`.
+  - Hover: Background changes to `Pink` (`#D92D6F`), default icon hidden, white icon shown.
+- **CSS classes**: `header-delete-mobile btn-icon-danger` (inherits the shared danger-icon style).
+- **HTML** (inside `<header>` in `HeaderComponent`):
+  ```html
+  <button class="header-delete-mobile btn-icon-danger" id="open-delete-trip-modal-btn-mobile" title="Eliminar viaje">
+    <img src="/icons/trash can.png" alt="Eliminar" style="width: 20px; height: 20px;" class="trash-icon-default" />
+    <img src="/icons/white trash can.png" alt="Eliminar" style="width: 20px; height: 20px;" class="trash-icon-hover" />
+  </button>
+  ```
+
+### 7c. Mobile Header — User Avatar (`header-avatar-mobile`)
+- **Placement**: Left side of the mobile `<header>`, opposite the delete button.
+- **Only visible on mobile** (`display: none` on desktop via global rule).
+- **Visual spec**:
+  - Container: `36px x 36px`, Border Radius `50%` (circular), Background transparent, No border.
+  - Icon: `/icons/user.png` (or equivalent), `24px x 24px`, no color filter.
 
 ### 8. Expense Item
 - **Variants**: `type=food`, `type=shopping`, `type=transportation`.
@@ -193,7 +257,20 @@ The spacing system uses the following increments observed in Figma layout paddin
   - Text Labels (gap `0` / column):
     - Title: Font `Body M` (Medium 14px), Color `black`, text represents name (e.g., "Mc Donnald's", "Compras", "Transporte").
     - Subtitle: Font `Caption M` (Medium 12px), Color `gray dark` (`#9CA7BF`), text represents category label ("Alimentación", "Compras", "Transporte").
-- **Right Column**: Price text in Font `Body B` (Bold 14px), Color `black` (e.g., `- $30.00`).
+- **Right Column**: Row layout, gap `8px`, items center.
+  - Price text in Font `Body B` (Bold 14px), Color `black` (e.g., `- $30.00`).
+  - **Delete Button** (`expense-delete-btn btn-icon-danger`): `36px x 36px`, Border Radius `12px`, Background `#ffe6eb`.
+    - Default icon: `/icons/trash can.png`, `20px x 20px` (class `trash-icon-default`).
+    - Hover icon: `/icons/white trash can.png`, `20px x 20px` (class `trash-icon-hover`).
+    - Hover state: Background `Pink` (`#D92D6F`), default icon hidden, hover icon shown.
+    - Clicking opens the Delete Expense confirmation modal.
+  - **HTML pattern**:
+    ```html
+    <button class="expense-delete-btn btn-icon-danger" data-id="{expense.id}" title="Eliminar gasto" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+      <img src="/icons/trash can.png" alt="Eliminar" style="width: 20px; height: 20px;" class="trash-icon-default" />
+      <img src="/icons/white trash can.png" alt="Eliminar" style="width: 20px; height: 20px;" class="trash-icon-hover" />
+    </button>
+    ```
 
 ### 9. Dropdown
 - **Structure**: Column container. Label at top, Dropdown box below.
