@@ -196,14 +196,16 @@ The chart implementation goes significantly beyond the static Figma spec. The fo
 - A minimum bar height of `4px` is enforced for days with `$0` to stay visually present.
 - Each bar has a `data-value` and `title` attribute showing the amount on hover.
 
-**CSS Grid layout:**
+**CSS Grid layout & Sticky Axis Masking:**
 - The chart uses a CSS Grid with `grid-template-columns: 36px 11px repeat(N, minmax(52px, 1fr))` where N = number of visual columns.
-- Column 1 = Y-axis labels, Column 2 = spacer, Columns 3+ = data bars + date labels.
+- The Y-axis (labels + "Fecha") is encapsulated in a unified `.chart-y-axis-container` that acts as a sticky mask (`position: sticky; left: 0`). It provides a solid white background that completely covers columns 1 and 2, ensuring that chart bars and grid lines cut off cleanly as they scroll underneath.
 - Rows 1–6 = grid lines + bar containers, Row 7 = X-axis date labels.
 
-**Scrollable container:**
-- The chart is wrapped in `.chart-scroll-wrapper` (overflow-x: auto) to support horizontal scrolling when bars exceed the card width.
-- On initial render, the scroll is automatically set to `scrollLeft = scrollWidth` so the most recent dates are visible by default.
+**Scrollable container & Animations:**
+- The chart is wrapped in `.chart-scroll-wrapper` (`overflow-x: auto`) to support horizontal scrolling. Its width is strictly bounded by the `.chart-card` internal padding.
+- The scrollbar is visually customized using `::-webkit-scrollbar` with a `--color-gray-light` thumb.
+- **Smart Auto-scroll:** Upon rendering, the chart detects the most recently added or modified expense and automatically scrolls to center that specific column in the viewport.
+- **Highlight Animation:** When an expense is actively added, the chart performs a custom cinematic 1.2-second smooth scroll (using `requestAnimationFrame` and an `easeInOutCubic` curve) to the target bar. As the scroll arrives, the target bar is highlighted with `--color-pink` for 1 second, then gracefully fades back to its default color over 1 second.
 
 **Category icon assets** (used in expense items, referenced by `categoryIconMap`):
 - `food` / `Alimentación`: `/icons/Hamburger.png`

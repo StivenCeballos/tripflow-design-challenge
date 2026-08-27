@@ -481,13 +481,13 @@ select {
 
 .dashboard-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 24px;
 }
 
 @media (max-width: 1024px) {
   .dashboard-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -665,8 +665,8 @@ select {
 .chart-scroll-wrapper {
   overflow-x: auto;
   overflow-y: hidden;
-  margin: 0 -20px;
-  padding: 0 20px;
+  margin: -32px 0 0 0;
+  padding: 32px 0 0 0;
 }
 
 .chart-scroll-inner {
@@ -678,15 +678,28 @@ select {
 }
 
 .chart-row-label {
-  width: 36px;
   font-size: 12px;
   color: var(--color-gray-dark);
   font-weight: 400;
   text-align: left;
+}
+
+.chart-y-axis-container {
   position: sticky;
   left: 0;
+  width: 47px;
+  height: 100%;
   background-color: var(--color-white);
+  box-shadow: -2px 0 0 0 var(--color-white);
   z-index: 10;
+  pointer-events: none;
+}
+
+.chart-y-axis-inner {
+  display: grid;
+  grid-template-rows: repeat(6, 32px) 24px;
+  row-gap: 8px;
+  align-items: center;
 }
 
 .chart-row-gridline {
@@ -705,16 +718,40 @@ select {
   width: 38px;
   background-color: var(--color-gray-dark);
   border-radius: var(--radius-xs) var(--radius-xs) 0 0;
-  transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s;
+  transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1), background-color 1s ease-in-out;
   pointer-events: auto;
   position: absolute;
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
+  
+  /* Dynamic height calculation */
+  --max-h: 200px;
+  height: calc(var(--bar-ratio, 0) * var(--max-h));
+  min-height: 4px;
 }
 
 .chart-bar:hover {
   background-color: var(--color-pink);
+}
+
+.chart-bar.highlight-added {
+  background-color: var(--color-pink) !important;
+}
+
+/* Custom Scrollbar for Chart */
+.chart-scroll-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+.chart-scroll-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chart-scroll-wrapper::-webkit-scrollbar-thumb {
+  background-color: var(--color-gray-light);
+  border-radius: 4px;
+}
+.chart-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-gray);
 }
 
 /* Chart Tooltip */
@@ -742,14 +779,9 @@ select {
 }
 
 .chart-axis-title {
-  width: 36px;
   font-size: 12px;
   color: var(--color-gray-dark);
   font-weight: 400;
-  position: sticky;
-  left: 0;
-  background-color: var(--color-white);
-  z-index: 10;
 }
 
 .chart-date-label {
@@ -866,9 +898,6 @@ select {
   gap: 16px;
 }
 
-.expense-delete-btn {
-  /* Using btn-icon-danger styles now */
-}
 
 .expense-category-circle {
   width: 38px;
@@ -1441,7 +1470,7 @@ select {
   }
 
   .dashboard-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }
 
@@ -1771,9 +1800,14 @@ select {
     row-gap: 6px;
   }
 
+  .chart-y-axis-inner {
+    grid-template-rows: repeat(6, 28px) 20px;
+    row-gap: 6px;
+  }
+
   .chart-bar-container .chart-bar {
     bottom: 14px;
-    /* Align to the center of Row 6 (28px / 2 = 14px) */
+    --max-h: 170px;
   }
 
   /* Mobile Bottom Navbar (Component 7) */

@@ -74,14 +74,82 @@ function renderApp() {
   // 2. Render sub-components into their slots
   document.querySelector('#header-root').innerHTML = HeaderComponent(currentTrip);
   document.querySelector('#budget-summary-root').innerHTML = BudgetSummaryComponent(currentTrip);
-  const chartMaxCols = window.innerWidth < 768 ? 5 : null;
+  const chartMaxCols = null;
   document.querySelector('#expense-chart-root').innerHTML = ExpenseChartComponent(currentTrip, chartMaxCols);
   document.querySelector('#expense-list-root').innerHTML = ExpenseListComponent(currentTrip);
 
-  // 2.5 Scroll chart wrapper to the right so that current/latest day is visible initially
+  // 2.5 Auto-scroll chart to the most recently added expense column
   const chartWrapper = document.querySelector('.chart-scroll-wrapper');
   if (chartWrapper) {
-    chartWrapper.scrollLeft = chartWrapper.scrollWidth;
+    if (currentTrip.expenses && currentTrip.expenses.length > 0) {
+      const lastExp = currentTrip.expenses[0];
+      const rawDate = lastExp.date;
+      const datePart = rawDate.includes(' - ') ? rawDate.split(' - ')[1] : rawDate;
+      const parts = datePart.split('/');
+      
+      if (parts.length === 3) {
+        const dd = parts[0];
+        const m = parseInt(parts[1], 10) - 1;
+        const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const shortDate = `${dd} ${monthNames[m]}`;
+        
+        const labels = Array.from(document.querySelectorAll('.chart-date-label'));
+        const targetLabel = labels.find(l => l.innerText === shortDate || l.getAttribute('data-tooltip') === shortDate);
+        
+        if (targetLabel) {
+          // Center the column in the wrapper viewport
+          const scrollTarget = targetLabel.offsetLeft - chartWrapper.offsetWidth / 2 + 20;
+          const isNew = window.recentlyAddedExpense;
+          
+          if (isNew) {
+            window.recentlyAddedExpense = false;
+            
+            // Custom Slow Smooth Scroll
+            const startPos = chartWrapper.scrollLeft;
+            const distance = scrollTarget - startPos;
+            const duration = 1200; // 1.2s duration
+            let startTime = null;
+            
+            const animation = (currentTime) => {
+              if (startTime === null) startTime = currentTime;
+              const timeElapsed = currentTime - startTime;
+              
+              // easeInOutCubic curve
+              let t = timeElapsed / (duration / 2);
+              let run = 0;
+              if (t < 1) run = distance / 2 * t * t * t + startPos;
+              else {
+                t -= 2;
+                run = distance / 2 * (t * t * t + 2) + startPos;
+              }
+              
+              chartWrapper.scrollLeft = run;
+              if (timeElapsed < duration) requestAnimationFrame(animation);
+            };
+            requestAnimationFrame(animation);
+            
+            const targetBar = document.querySelector(`.chart-bar[title^="${shortDate}:"]`);
+            if (targetBar) {
+              // Delay highlight slightly so it activates as the chart scrolls into view
+              setTimeout(() => {
+                targetBar.classList.add('highlight-added');
+                setTimeout(() => {
+                  targetBar.classList.remove('highlight-added');
+                }, 1000);
+              }, 400);
+            }
+          } else {
+            chartWrapper.scrollLeft = scrollTarget;
+          }
+        } else {
+          chartWrapper.scrollLeft = chartWrapper.scrollWidth;
+        }
+      } else {
+        chartWrapper.scrollLeft = chartWrapper.scrollWidth;
+      }
+    } else {
+      chartWrapper.scrollLeft = chartWrapper.scrollWidth;
+    }
   }
 
   // 3. Render trip selector dropdown options + "Crear nuevo viaje" button
@@ -359,6 +427,8 @@ function attachEventListeners() {
         category,
         categoryKey
       });
+      
+      window.recentlyAddedExpense = true;
 
       // Close modal and refresh UI
       hideModal();

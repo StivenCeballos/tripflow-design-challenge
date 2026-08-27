@@ -164,7 +164,6 @@ export function BudgetSummaryComponent(trip) {
  * @returns {string} HTML string
  */
 export function ExpenseChartComponent(trip, maxColumns = null) {
-  const chartHeightMax = 160;
 
   // Determine dynamic range (from ALL data, not just visible columns)
   const maxVal = Math.max(0, ...Object.values(trip.chartData));
@@ -217,31 +216,41 @@ export function ExpenseChartComponent(trip, maxColumns = null) {
     visualItems = visualItems.slice(-maxColumns);
   }
 
-  // Generate Grid Background (Y-axis labels and horizontal dashed lines)
-  const gridRowsHtml = [5, 4, 3, 2, 1, 0].map((i, index) => {
-    const val = niceStep * i;
+  // Generate Grid Lines
+  const gridLinesHtml = [5, 4, 3, 2, 1, 0].map((i, index) => {
     const row = index + 1; // grid row 1 to 6
-    return `
-      <div class="chart-row-label" style="grid-row: ${row}; grid-column: 1;">$${val}</div>
-      <div class="chart-row-gridline" style="grid-row: ${row}; grid-column: 3 / -1;"></div>
-    `;
+    return `<div class="chart-row-gridline" style="grid-row: ${row}; grid-column: 1 / -1;"></div>`;
   }).join('');
 
-  // X-axis label
-  const xAxisLabel = `<div class="chart-axis-title" style="grid-row: 7; grid-column: 1;">Fecha</div>`;
+  // Generate Y-Axis Labels & Date Title inside a solid sticky container
+  const yAxisLabelsHtml = [5, 4, 3, 2, 1, 0].map((i, index) => {
+    const val = niceStep * i;
+    const row = index + 1;
+    return `<div class="chart-row-label" style="grid-row: ${row};">$${val}</div>`;
+  }).join('');
+
+  const xAxisLabelHtml = `<div class="chart-axis-title" style="grid-row: 7;">Fecha</div>`;
+
+  const stickyAxisHtml = `
+    <div class="chart-y-axis-container" style="grid-row: 1 / -1; grid-column: 1 / -1;">
+      <div class="chart-y-axis-inner">
+        ${yAxisLabelsHtml}
+        ${xAxisLabelHtml}
+      </div>
+    </div>
+  `;
 
   // Generate Foreground Columns (Bars + Date Labels)
   const columnsHtml = visualItems.map((item, i) => {
     const col = i + 3; // Start from column 3
     const { dateKey, val } = item;
     
-    // Bar
-    let barHeight = val === 0 ? 4 : Math.min(chartHeightMax, (val / rangeMax) * chartHeightMax);
-    if (barHeight < 4) barHeight = 4;
+    // Bar height calculated via CSS using the ratio
+    const ratio = rangeMax > 0 ? (val / rangeMax) : 0;
     
     const barHtml = `
       <div class="chart-bar-container" style="grid-row: 1 / 7; grid-column: ${col};">
-        <div class="chart-bar" style="height: ${barHeight}px;" data-value="$${val.toFixed(0)}" title="${dateKey}: $${val.toFixed(0)}"></div>
+        <div class="chart-bar" style="--bar-ratio: ${ratio};" data-value="$${val.toFixed(0)}" title="${dateKey}: $${val.toFixed(0)}"></div>
       </div>
     `;
     
@@ -263,8 +272,8 @@ export function ExpenseChartComponent(trip, maxColumns = null) {
       </div>
       <div class="chart-scroll-wrapper">
         <div class="chart-scroll-inner" style="grid-template-columns: 36px 11px repeat(${visualItems.length}, minmax(52px, 1fr));">
-          ${gridRowsHtml}
-          ${xAxisLabel}
+          ${gridLinesHtml}
+          ${stickyAxisHtml}
           ${columnsHtml}
         </div>
       </div>
@@ -348,7 +357,7 @@ export function ExpenseListComponent(trip) {
 
     groupsHtml += `
       <div class="expense-group">
-        <h4 class="expense-group-title">${dateGroup === todayStr ? 'Hoy' : dateGroup}</h4>
+        <h4 class="expense-group-title">${dateGroup === todayStr ? `Hoy - ${dd}/${mm}/${yy}` : dateGroup}</h4>
         ${itemsHtml}
       </div>
     `;
