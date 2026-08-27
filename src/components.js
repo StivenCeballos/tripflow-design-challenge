@@ -174,7 +174,7 @@ export function ExpenseChartComponent(trip) {
       zeroBuffer.push(dateKey);
     } else {
       if (zeroBuffer.length > 0) {
-        if (zeroBuffer.length <= 3) {
+        if (zeroBuffer.length <= 2) {
           zeroBuffer.forEach(d => visualItems.push({ type: 'day', dateKey: d, val: 0 }));
         } else {
           const rangeStr = `${zeroBuffer[0]} a ${zeroBuffer[zeroBuffer.length - 1]}`;

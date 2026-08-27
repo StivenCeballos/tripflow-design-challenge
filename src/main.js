@@ -7,7 +7,8 @@ import {
   deleteExpense,
   addTrip,
   deleteTrip,
-  resetData 
+  resetData,
+  parseTripBound
 } from './data.js';
 import { 
   SidebarComponent, 
@@ -124,6 +125,19 @@ function attachEventListeners() {
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const dd = String(today.getDate()).padStart(2, '0');
         dateInput.value = `${yyyy}-${mm}-${dd}`;
+        
+        // Restrict to trip end date
+        const currentTrip = getCurrentTrip();
+        if (currentTrip && currentTrip.dates) {
+          const bounds = currentTrip.dates.split(' a ');
+          const tripEnd = bounds.length > 1 ? parseTripBound(bounds[1]) : parseTripBound(bounds[0]);
+          if (tripEnd.getTime() > 0) {
+            const endY = tripEnd.getFullYear();
+            const endM = String(tripEnd.getMonth() + 1).padStart(2, '0');
+            const endD = String(tripEnd.getDate()).padStart(2, '0');
+            dateInput.max = `${endY}-${endM}-${endD}`;
+          }
+        }
       }
     });
   }
@@ -222,6 +236,35 @@ function attachEventListeners() {
       if (!category) {
         alert('Por favor selecciona una categoría.');
         return;
+      }
+      
+      // Validate date and budget
+      const currentTrip = getCurrentTrip();
+      if (currentTrip) {
+        // 1. Validate Budget
+        const parsedAmount = parseFloat(amount);
+        const currentTotal = currentTrip.expenses.reduce((sum, e) => sum + e.amount, 0);
+        if (currentTotal + parsedAmount > currentTrip.totalBudget) {
+          alert('No puedes añadir este gasto porque superaría el presupuesto total del viaje.');
+          return;
+        }
+
+        // 2. Validate Date is not after trip end date
+        if (currentTrip.dates) {
+          const bounds = currentTrip.dates.split(' a ');
+          const tripEnd = bounds.length > 1 ? parseTripBound(bounds[1]) : parseTripBound(bounds[0]);
+          if (tripEnd.getTime() > 0) {
+            const [yy, mm, dd] = rawDate.split('-').map(Number);
+            const expenseDate = new Date(yy, mm - 1, dd);
+            expenseDate.setHours(0, 0, 0, 0);
+            tripEnd.setHours(0, 0, 0, 0);
+            
+            if (expenseDate > tripEnd) {
+              alert('No puedes agregar un gasto a una fecha posterior a la finalización del viaje.');
+              return;
+            }
+          }
+        }
       }
 
       // Add to mock storage

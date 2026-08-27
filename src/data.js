@@ -28,15 +28,15 @@ const MOCK_TRIPS = [
     dates: 'Jul/12/26 a Jul/20/26',
     totalBudget: 1500,
     expenses: [
-      { id: 1, name: "Louvre Museum", category: "Compras", categoryKey: "shopping", amount: 40.00, date: "Miércoles - 15/07/26" },
-      { id: 2, name: "Metro Pass", category: "Transporte", categoryKey: "transportation", amount: 15.00, date: "Martes - 14/07/26" },
+      { id: 1, name: "Louvre Museum", category: "Compras", categoryKey: "shopping", amount: 40.00, date: "Domingo - 19/07/26" },
+      { id: 2, name: "Metro Pass", category: "Transporte", categoryKey: "transportation", amount: 15.00, date: "Viernes - 17/07/26" },
       { id: 3, name: "Bistro dinner", category: "Alimentación", categoryKey: "food", amount: 65.00, date: "Lunes - 13/07/26" }
     ],
-    chartDates: ["13 Jul", "14 Jul", "15 Jul"],
+    chartDates: ["13 Jul", "17 Jul", "19 Jul"],
     chartData: {
       "13 Jul": 65,
-      "14 Jul": 15,
-      "15 Jul": 40
+      "17 Jul": 15,
+      "19 Jul": 40
     }
   },
   {
@@ -45,25 +45,54 @@ const MOCK_TRIPS = [
     dates: 'Jun/05/26 a Jun/15/26',
     totalBudget: 2000,
     expenses: [
-      { id: 1, name: "Sushi lunch", category: "Alimentación", categoryKey: "food", amount: 80.00, date: "Miércoles - 07/06/26" },
-      { id: 2, name: "Souvenirs Shinjuku", category: "Compras", categoryKey: "shopping", amount: 150.00, date: "Martes - 06/06/26" },
-      { id: 3, name: "Bullet Train Ticket", category: "Transporte", categoryKey: "transportation", amount: 120.00, date: "Lunes - 05/06/26" }
+      { id: 1, name: "Sushi lunch", category: "Alimentación", categoryKey: "food", amount: 80.00, date: "Domingo - 14/06/26" },
+      { id: 2, name: "Souvenirs Shinjuku", category: "Compras", categoryKey: "shopping", amount: 150.00, date: "Miércoles - 10/06/26" },
+      { id: 3, name: "Bullet Train Ticket", category: "Transporte", categoryKey: "transportation", amount: 120.00, date: "Viernes - 05/06/26" }
     ],
-    chartDates: ["05 Jun", "06 Jun", "07 Jun"],
+    chartDates: ["05 Jun", "10 Jun", "14 Jun"],
     chartData: {
       "05 Jun": 120,
-      "06 Jun": 150,
-      "07 Jun": 80
+      "10 Jun": 150,
+      "14 Jun": 80
     }
   }
 ];
 
+const MONTHS = {
+  'Ene': 0, 'Feb': 1, 'Mar': 2, 'Abr': 3, 'May': 4, 'Jun': 5,
+  'Jul': 6, 'Ago': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dic': 11
+};
+
+export function parseTripBound(dateStr) {
+  if (dateStr.includes('-')) {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
+  }
+  if (dateStr.includes('/')) {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const m = MONTHS[parts[0]];
+      const d = parseInt(parts[1], 10);
+      let y = parseInt(parts[2], 10);
+      if (y < 100) y += 2000;
+      return new Date(y, m, d);
+    }
+  }
+  return new Date(0);
+}
+
 // Initialize State in localStorage or memory
-let tripsState = JSON.parse(localStorage.getItem('tripflow_trips_v2')) || MOCK_TRIPS;
+let tripsState = JSON.parse(localStorage.getItem('tripflow_trips_v3')) || MOCK_TRIPS;
 
 // One-time cleanup: remove test "Maracaibo" trips
 tripsState = tripsState.filter(t => !t.name.toLowerCase().includes('maracaibo'));
-localStorage.setItem('tripflow_trips_v2', JSON.stringify(tripsState));
+
+// Ensure all trips have fully hydrated chronological chart data
+tripsState.forEach(trip => recalculateChartData(trip));
+
+localStorage.setItem('tripflow_trips_v3', JSON.stringify(tripsState));
 
 let currentTripId = localStorage.getItem('tripflow_current_trip_id') || 'cancun';
 
@@ -73,7 +102,7 @@ if (!tripsState.find(t => t.id === currentTripId) && tripsState.length > 0) {
 }
 
 function saveToStorage() {
-  localStorage.setItem('tripflow_trips_v2', JSON.stringify(tripsState));
+  localStorage.setItem('tripflow_trips_v3', JSON.stringify(tripsState));
   localStorage.setItem('tripflow_current_trip_id', currentTripId);
 }
 
@@ -92,30 +121,6 @@ export function setCurrentTrip(id) {
 
 // Helper to dynamically calculate chart data from expenses
 function recalculateChartData(trip) {
-  const MONTHS = {
-    'Ene': 0, 'Feb': 1, 'Mar': 2, 'Abr': 3, 'May': 4, 'Jun': 5,
-    'Jul': 6, 'Ago': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dic': 11
-  };
-
-  function parseTripBound(dateStr) {
-    if (dateStr.includes('-')) {
-      const parts = dateStr.split('-');
-      if (parts.length === 3) {
-        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-      }
-    }
-    if (dateStr.includes('/')) {
-      const parts = dateStr.split('/');
-      if (parts.length === 3) {
-        const m = MONTHS[parts[0]];
-        const d = parseInt(parts[1], 10);
-        let y = parseInt(parts[2], 10);
-        if (y < 100) y += 2000;
-        return new Date(y, m, d);
-      }
-    }
-    return new Date(0);
-  }
 
   function parseExpenseDate(dateStr) {
     if (dateStr === 'Hoy') {
