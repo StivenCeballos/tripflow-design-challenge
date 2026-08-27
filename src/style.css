@@ -366,7 +366,38 @@ select {
   margin-top: 4px;
 }
 
-/* Button UI Components */
+/* Bottom sheet header — hidden on desktop, visible on mobile via media query */
+.trip-sheet-header {
+  display: none;
+}
+
+.trip-sheet-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-black);
+}
+
+.trip-sheet-close-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-light);
+  transition: var(--transition-normal);
+}
+
+.trip-sheet-close-btn:hover {
+  background: var(--color-gray);
+}
+
+/* Bottom sheet backdrop — hidden on desktop */
+.trip-bottom-sheet-backdrop {
+  display: none;
+}
+
+
 .btn-primary {
   background-color: var(--color-pink);
   color: var(--color-white);
@@ -905,15 +936,15 @@ select {
 /* Modal UI Component — Figma-matching design */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0; /* top: 0; right: 0; bottom: 0; left: 0 */
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background-color: var(--shadow-overlay);
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 500;
+  z-index: 3000;
   backdrop-filter: blur(2px);
 }
 
@@ -1425,17 +1456,106 @@ select {
     display: none !important;
   }
 
+  /* === Trip Selector: Bottom Sheet on Mobile === */
+  .trip-bottom-sheet-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(43, 43, 43, 0.45);
+    z-index: 1999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .trip-bottom-sheet-backdrop.open {
+    display: block;
+    opacity: 1;
+  }
+
   .trip-selector-dropdown {
-    position: absolute !important;
-    top: 100% !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: translateY(100%) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
     z-index: 2000 !important;
-    width: 90vw !important;
-    max-width: 320px !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
-    margin-top: 8px !important;
-    border-radius: var(--radius-sm);
+    border-radius: 20px 20px 0 0 !important;
+    border: none !important;
+    border-top: 1px solid var(--color-gray) !important;
+    box-shadow: 0 -8px 32px rgba(43, 43, 43, 0.18) !important;
+    animation: none !important;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: 70vh !important;
+    max-height: 70dvh !important;
+    overflow-y: auto !important;
+  }
+
+  .trip-selector-dropdown.open {
+    transform: translateY(0) !important;
+  }
+
+  /* Bottom sheet drag handle */
+  .trip-selector-dropdown::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--color-gray);
+    border-radius: 999px;
+    margin: 12px auto 8px;
+    flex-shrink: 0;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Add top padding so content doesn't sit behind handle */
+  .trip-selector-dropdown {
+    padding-top: 24px;
+  }
+
+  /* Show the bottom sheet header on mobile */
+  .trip-sheet-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 16px 12px;
+    border-bottom: 1px solid var(--color-gray-light);
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  /* "Crear nuevo viaje" button — full button style on mobile */
+  .trip-dropdown-create-btn {
+    margin: 12px 16px 24px;
+    width: calc(100% - 32px) !important;
+    justify-content: center;
+    border-top: none !important;
+    border-radius: var(--radius-md) !important;
+    background-color: var(--color-pink) !important;
+    color: var(--color-white) !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    padding: 14px 24px !important;
+    gap: 10px;
+  }
+
+  .trip-dropdown-create-btn:hover {
+    background-color: #b8235a !important;
+  }
+
+  .trip-dropdown-create-btn i {
+    font-size: 20px;
+    color: var(--color-white);
   }
 
   .trip-selector-container {
@@ -1695,16 +1815,82 @@ select {
     /* makes plus icon white */
   }
 
-  /* Modals responsiveness */
+  /* Hide FAB and navbar while any modal bottom-sheet is open */
+  body.modal-open .mobile-fab-btn,
+  body.modal-open .mobile-navbar {
+    display: none !important;
+  }
+
+  /* === Modals → Bottom Sheets on Mobile === */
+  .modal-overlay {
+    align-items: flex-end !important;
+    backdrop-filter: blur(3px);
+    padding: 0 !important;
+    height: 100vh;
+    height: 100dvh;
+  }
+
   .modal-container {
-    width: 92%;
-    max-width: 450px;
-    margin: 16px auto;
-    padding: 16px;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 28px 20px 0 !important;
+    animation: none !important;
+    transform: translateY(100%);
+    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    /* Cap height — use dvh so virtual keyboard is accounted for */
+    max-height: 85dvh;
+    max-height: 85vh; /* fallback */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* prevent outer scroll; inner body scrolls */
+  }
+
+  /* Slide-up when overlay is open */
+  .modal-overlay.open .modal-container {
+    transform: translateY(0);
+    animation: slideUpSheet 0.38s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Drag handle */
+  .modal-container::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--color-gray);
+    border-radius: 999px;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   .modal-fields {
     gap: 16px;
+  }
+
+  /* Make the modal body scroll independently — header/actions stay pinned */
+  .modal-body {
+    overflow-y: auto;
+    flex: 1;
+    padding-bottom: 16px;
+  }
+
+  /* Modal actions always visible at bottom of sheet */
+  .modal-actions {
+    flex-shrink: 0;
+    padding: 16px 0 max(24px, env(safe-area-inset-bottom, 24px));
+    border-top: 1px solid var(--color-gray-light);
+    margin-top: 0;
+  }
+
+  /* Modal header pinned at top */
+  .modal-header {
+    flex-shrink: 0;
   }
 
   .form-row {
@@ -1719,5 +1905,15 @@ select {
 
   .form-currency-group {
     width: 100% !important;
+  }
+}
+
+/* Slide-up keyframe for mobile modals */
+@keyframes slideUpSheet {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
   }
 }

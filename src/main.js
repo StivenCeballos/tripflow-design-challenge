@@ -25,6 +25,18 @@ import {
 
 let currentTab = 'resumen';
 
+// Scroll lock helpers for mobile bottom sheets / modals
+const lockScroll = () => {
+  if (window.innerWidth < 768) {
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
+  }
+};
+const unlockScroll = () => {
+  document.body.style.overflow = '';
+  document.body.classList.remove('modal-open');
+};
+
 // Central render function to bind data and UI updates
 function renderApp() {
   const currentTrip = getCurrentTrip();
@@ -62,7 +74,8 @@ function renderApp() {
   // 2. Render sub-components into their slots
   document.querySelector('#header-root').innerHTML = HeaderComponent(currentTrip);
   document.querySelector('#budget-summary-root').innerHTML = BudgetSummaryComponent(currentTrip);
-  document.querySelector('#expense-chart-root').innerHTML = ExpenseChartComponent(currentTrip);
+  const chartMaxCols = window.innerWidth < 768 ? 5 : null;
+  document.querySelector('#expense-chart-root').innerHTML = ExpenseChartComponent(currentTrip, chartMaxCols);
   document.querySelector('#expense-list-root').innerHTML = ExpenseListComponent(currentTrip);
 
   // 2.5 Scroll chart wrapper to the right so that current/latest day is visible initially
@@ -73,7 +86,14 @@ function renderApp() {
 
   // 3. Render trip selector dropdown options + "Crear nuevo viaje" button
   const dropdownEl = document.querySelector('#trip-dropdown');
-  dropdownEl.innerHTML = trips.map(t => `
+  dropdownEl.innerHTML = `
+    <div class="trip-sheet-header">
+      <span class="trip-sheet-title">Selecciona un viaje</span>
+      <button class="trip-sheet-close-btn" id="trip-sheet-close-btn" title="Cerrar">
+        <img src="/icons/Close.png" alt="Cerrar" style="width: 16px; height: 16px;" />
+      </button>
+    </div>
+  ` + trips.map(t => `
     <button class="trip-option" data-id="${t.id}">
       <span class="trip-option-name">${t.name}</span>
       <span class="trip-option-dates">${t.dates}</span>
@@ -110,10 +130,39 @@ function attachEventListeners() {
   // Trip Selector Dropdown toggle
   const tripBtn = document.querySelector('#trip-selector-btn');
   const tripDropdown = document.querySelector('#trip-dropdown');
+  const tripBackdrop = document.querySelector('#trip-sheet-backdrop');
+
+  const closeTripDropdown = () => {
+    if (tripDropdown) tripDropdown.classList.remove('open');
+    if (tripBackdrop) tripBackdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
   if (tripBtn && tripDropdown) {
     tripBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      tripDropdown.classList.toggle('open');
+      const isOpen = tripDropdown.classList.toggle('open');
+      if (tripBackdrop) tripBackdrop.classList.toggle('open', isOpen);
+      // Lock body scroll on mobile when sheet is open
+      if (window.innerWidth < 768) {
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+      }
+    });
+  }
+
+  // Backdrop click closes the sheet
+  if (tripBackdrop) {
+    tripBackdrop.addEventListener('click', () => {
+      closeTripDropdown();
+    });
+  }
+
+  // Bottom sheet header close button
+  const tripSheetCloseBtn = document.querySelector('#trip-sheet-close-btn');
+  if (tripSheetCloseBtn) {
+    tripSheetCloseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeTripDropdown();
     });
   }
 
@@ -123,6 +172,7 @@ function attachEventListeners() {
     opt.addEventListener('click', (e) => {
       const tripId = opt.getAttribute('data-id');
       setCurrentTrip(tripId);
+      closeTripDropdown();
       renderApp(); // Full rerender
     });
   });
@@ -147,6 +197,7 @@ function attachEventListeners() {
     openModalBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         modalOverlay.classList.add('open');
+        lockScroll();
       
       // Auto-populate Date field with today's date in YYYY-MM-DD (native date input format)
       const dateInput = document.querySelector('#expense-date-input');
@@ -176,6 +227,7 @@ function attachEventListeners() {
   const hideModal = () => {
     if (modalOverlay) {
       modalOverlay.classList.remove('open');
+      unlockScroll();
       resetModalForm();
     }
   };
@@ -321,6 +373,7 @@ function attachEventListeners() {
   const hideCreateTripModal = () => {
     if (createTripOverlay) {
       createTripOverlay.classList.remove('open');
+      unlockScroll();
       const tripForm = document.querySelector('#create-trip-form');
       if (tripForm) tripForm.reset();
       const submitBtn = document.querySelector('#create-trip-submit-btn');
@@ -331,8 +384,9 @@ function attachEventListeners() {
   if (openCreateTripBtn) {
     openCreateTripBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      tripDropdown.classList.remove('open');
+      closeTripDropdown();
       createTripOverlay.classList.add('open');
+      lockScroll();
     });
   }
 
@@ -350,13 +404,13 @@ function attachEventListeners() {
   const deleteTripOverlay = document.querySelector('#delete-trip-modal-overlay');
 
   const hideDeleteTripModal = () => {
-    if (deleteTripOverlay) deleteTripOverlay.classList.remove('open');
+    if (deleteTripOverlay) { deleteTripOverlay.classList.remove('open'); unlockScroll(); }
   };
 
   if (openDeleteTripBtns.length > 0) {
     openDeleteTripBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        if (deleteTripOverlay) deleteTripOverlay.classList.add('open');
+        if (deleteTripOverlay) { deleteTripOverlay.classList.add('open'); lockScroll(); }
       });
     });
   }
@@ -391,6 +445,7 @@ function attachEventListeners() {
   const hideDeleteExpenseModal = () => {
     if (deleteExpenseOverlay) {
       deleteExpenseOverlay.classList.remove('open');
+      unlockScroll();
       expenseToDeleteId = null;
     }
   };
@@ -424,6 +479,7 @@ function attachEventListeners() {
           expenseToDeleteId = expenseId;
           if (deleteExpenseOverlay) {
             deleteExpenseOverlay.classList.add('open');
+            lockScroll();
           }
         }
       }
@@ -482,14 +538,16 @@ function attachEventListeners() {
 
   // Global Outside click closing rules
   document.addEventListener('click', () => {
-    if (tripDropdown) tripDropdown.classList.remove('open');
+    if (tripDropdown) { tripDropdown.classList.remove('open'); }
+    if (tripBackdrop) { tripBackdrop.classList.remove('open'); }
+    document.body.style.overflow = '';
     if (categoryDropdown) categoryDropdown.classList.remove('open');
   });
 
   // Keyboard accessibility listeners (Esc key)
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      if (tripDropdown) tripDropdown.classList.remove('open');
+      closeTripDropdown();
       if (categoryDropdown) categoryDropdown.classList.remove('open');
       hideModal();
       hideCreateTripModal();

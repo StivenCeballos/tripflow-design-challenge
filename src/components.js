@@ -65,6 +65,7 @@ export function HeaderComponent(trip) {
             <span class="trip-selector-title">${trip.name}</span>
             <span class="trip-selector-arrow"></span>
           </button>
+          <div class="trip-bottom-sheet-backdrop" id="trip-sheet-backdrop"></div>
           <div class="trip-selector-dropdown" id="trip-dropdown">
             <!-- Dynamic trip options injected here -->
           </div>
@@ -162,10 +163,10 @@ export function BudgetSummaryComponent(trip) {
  * @param {Object} trip Current trip data
  * @returns {string} HTML string
  */
-export function ExpenseChartComponent(trip) {
+export function ExpenseChartComponent(trip, maxColumns = null) {
   const chartHeightMax = 160;
 
-  // Determine dynamic range
+  // Determine dynamic range (from ALL data, not just visible columns)
   const maxVal = Math.max(0, ...Object.values(trip.chartData));
   
   // Calculate a nice step size for 5 grid increments
@@ -187,7 +188,7 @@ export function ExpenseChartComponent(trip) {
   }
 
   // Process visual items to compress empty days
-  const visualItems = [];
+  let visualItems = [];
   let zeroBuffer = [];
 
   for (let i = 0; i < trip.chartDates.length; i++) {
@@ -209,6 +210,11 @@ export function ExpenseChartComponent(trip) {
       }
       visualItems.push({ type: 'day', dateKey, val });
     }
+  }
+
+  // Limit to last N columns if maxColumns is specified (e.g. mobile)
+  if (maxColumns !== null && visualItems.length > maxColumns) {
+    visualItems = visualItems.slice(-maxColumns);
   }
 
   // Generate Grid Background (Y-axis labels and horizontal dashed lines)
