@@ -601,15 +601,13 @@ function resetModalForm() {
 
 // Helper to format dates from native date input (YYYY-MM-DD) to Figma weekday labels
 function formatInputDate(dateStr) {
-  if (!dateStr) return 'Hoy';
+  let dateObj = new Date(); // fallback to today
 
-  // Handle YYYY-MM-DD format from native date input
-  let dateObj;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+  if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
     const [year, month, day] = dateStr.split('-').map(Number);
     dateObj = new Date(year, month - 1, day);
-  } else if (dateStr.toLowerCase() === 'hoy') {
-    return 'Hoy';
+  } else if (dateStr && dateStr.toLowerCase() === 'hoy') {
+    dateObj = new Date();
   } else {
     // Legacy DD/MM/AA fallback
     const parts = dateStr.split('/');
@@ -627,16 +625,6 @@ function formatInputDate(dateStr) {
   const weekdays = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   const dayName = weekdays[dateObj.getDay()];
   
-  // Check if it matches today's date
-  const today = new Date();
-  if (
-    dateObj.getDate() === today.getDate() &&
-    dateObj.getMonth() === today.getMonth() &&
-    dateObj.getFullYear() === today.getFullYear()
-  ) {
-    return 'Hoy';
-  }
-
   const dd = String(dateObj.getDate()).padStart(2, '0');
   const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
   const yy = String(dateObj.getFullYear()).slice(-2);

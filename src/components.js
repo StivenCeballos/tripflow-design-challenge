@@ -308,6 +308,15 @@ export function ExpenseListComponent(trip) {
     transportation: '/icons/car.png'
   };
 
+  // Get today's formatted string to dynamically display "Hoy"
+  const weekdays = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const today = new Date();
+  const dayName = weekdays[today.getDay()];
+  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const yy = String(today.getFullYear()).slice(-2);
+  const todayStr = `${dayName} - ${dd}/${mm}/${yy}`;
+
   // Generate list layout html
   let groupsHtml = '';
   for (const dateGroup in groupedExpenses) {
@@ -339,7 +348,7 @@ export function ExpenseListComponent(trip) {
 
     groupsHtml += `
       <div class="expense-group">
-        <h4 class="expense-group-title">${dateGroup}</h4>
+        <h4 class="expense-group-title">${dateGroup === todayStr ? 'Hoy' : dateGroup}</h4>
         ${itemsHtml}
       </div>
     `;

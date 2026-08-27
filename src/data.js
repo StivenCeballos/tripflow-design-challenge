@@ -7,7 +7,7 @@ const MOCK_TRIPS = [
     dates: 'Ago/20/26 a Ago/28/26',
     totalBudget: 500,
     expenses: [
-      { id: 1, name: "Mc Donnald’s", category: "Alimentación", categoryKey: "food", amount: 30.00, date: "Hoy" },
+      { id: 1, name: "Mc Donnald’s", category: "Alimentación", categoryKey: "food", amount: 30.00, date: "Miércoles - 26/08/26" },
       { id: 2, name: "Mc Donnald’s", category: "Alimentación", categoryKey: "food", amount: 30.00, date: "Martes - 25/08/26" },
       { id: 3, name: "Compras", category: "Compras", categoryKey: "shopping", amount: 50.00, date: "Martes - 25/08/26" },
       { id: 4, name: "Transporte", category: "Transporte", categoryKey: "transportation", amount: 90.00, date: "Lunes - 24/08/26" }
@@ -85,6 +85,17 @@ export function parseTripBound(dateStr) {
 
 // Initialize State in localStorage or memory
 let tripsState = JSON.parse(localStorage.getItem('tripflow_trips_v3')) || MOCK_TRIPS;
+
+// Migration: Migrate any lingering "Hoy" categories to the mock date "Miércoles - 26/08/26"
+tripsState.forEach(trip => {
+  if (trip.expenses) {
+    trip.expenses.forEach(exp => {
+      if (exp.date === 'Hoy') {
+        exp.date = 'Miércoles - 26/08/26';
+      }
+    });
+  }
+});
 
 // One-time cleanup: remove test "Maracaibo" trips
 tripsState = tripsState.filter(t => !t.name.toLowerCase().includes('maracaibo'));
@@ -215,7 +226,7 @@ export function addExpense(expenseData) {
     category: expenseData.category,
     categoryKey: expenseData.categoryKey,
     amount: parseFloat(expenseData.amount),
-    date: expenseData.date || 'Hoy'
+    date: expenseData.date
   };
 
   // Add to expense log
