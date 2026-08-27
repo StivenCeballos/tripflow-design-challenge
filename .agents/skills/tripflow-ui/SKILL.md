@@ -120,6 +120,7 @@ The spacing system uses the following increments observed in Figma layout paddin
 
 ### 3. Budget Summary
 - **platform=mobile**:
+  - Container: `padding: 0 0 16px 0` (no top padding, bottom padding 16px).
   - Width: `320px`
   - Top text group (gap `8px`):
     - Value: Font `Hero` (Bold 40px), Color `black (2:163)` (`#333333`). Decimals `.00` should use color `gray` (`#C8CFDF`).
@@ -146,20 +147,19 @@ The spacing system uses the following increments observed in Figma layout paddin
     - **Inactive Item ("Viajes")**: Padding `8px`, Gap `8px`, Background transparent. Icon `28px x 28px` in `gray dark` (`#9CA7BF`). Text in Font `Action`, Color `gray dark` (`#9CA7BF`).
     - **Inactive Item ("Historial")**: Same as Inactive Item ("Viajes").
 - **Bottom Section**: Padding `8px`, justify-content `space-between`.
-  - User Info: Row layout, gap `8px`. Circular Avatar `28px x 28px` in `gray` (`#C8CFDF`) containing profile vector icon. Name in Font `Action`, Color `gray dark` (`#9CA7BF`).
+  - User Info: Row layout, gap `8px`. Circular Avatar `28px x 28px` in `pink light` (`#ffe6eb`) containing profile vector icon. Name in Font `Action`, Color `gray dark` (`#9CA7BF`).
   - Exit Icon: Right side, `24px x 24px` icon in `gray dark` (`#9CA7BF`) (Phosphor counterpart: `ph ph-sign-out`).
 
 ### 5. Alert
-- **platform=mobile**:
-  - Width `320px`, Height `59px` (or hug).
-  - Styling: Background `red light` (`#FFE8E8`), Border `1px solid red` (`#D04A4C`), Border Radius `12px`, Padding `12px`, Box Shadow `effect_156bdd74`.
-  - Left Section (gap `8px`): Icon `28px x 28px` (Phosphor counterpart: `ph ph-warning-circle`), Text in Font `Caption` (Regular 12px), Color `black (2:163)`. Critical text (e.g., "100 USD") must be bold/medium and colored `red` (`#D04A4C`).
+- **Global specs (mobile & desktop)**:
+  - Styling: Background `red light` (`#FFE8E8`), Border `1px solid red` (`#D04A4C`), Border Radius `12px`, Padding `12px` (desktop adds horizontal padding `16px`).
+  - Layout: `display: flex`, `justify-content: space-between`, `align-items: center`, `gap: 8px`.
+  - Left Section (gap `8px`):
+    - Icon `32px x 32px` (Phosphor counterpart: `ph ph-warning-circle`).
+    - Text in Font `Body M` (Medium 14px, line-height 20px), Color `black (2:163)`.
+    - Exact copy: `"Solo quedan <strong class="alert-critical">${disponible} USD</strong> disponibles y todavía quedan <strong class="alert-critical">${dias} día(s)</strong> de viaje."`
+    - Critical text ("X USD", "X día(s)") must be bold/medium (`500`) and colored `red` (`#D04A4C`).
   - Right Close Button: Container size `30px x 30px`, Close icon `16px x 16px` (Phosphor counterpart: `ph ph-x`), Color `black`.
-- **platform=desktop**:
-  - Width `503px`, Height `59px` (or hug).
-  - Styling: Same border, background, shadow, and radius as mobile.
-  - Left Section (gap `8px`): Icon `36px x 36px`, Text in Font `Body M` (Medium 14px), Color `black`. Critical text ("100 USD") in `red` (`#D04A4C`).
-  - Right Close Button: Close icon `16px x 16px` inside `30px x 30px` container.
 
 ### 6. Daily Expenses (Chart Card)
 - **Property 1=Default (mobile)**:
@@ -171,7 +171,7 @@ The spacing system uses the following increments observed in Figma layout paddin
   - X-Axis: Row layout, spacer width `36px`, container width `258px` displaying dates `"24 Ago"`, `"25 Ago"`, `"26 Ago"`, `"27 Ago"`, `"28 Ago"`. Font `Caption`, Color `gray dark`.
 - **Property 1=Variant2 (desktop)**:
   - Width `577px`, Padding `8px 12px`, Background `white`, Border Radius `8px`, Box Shadow `effect_29752526`.
-  - Header: Title "Gastos diarios" in Font `H3`, Color `black`.
+  - Header: Title "Gastos diarios" uses `.card-title` sizing globally (`20px`, `700`, Color `black`).
   - Grid & Labels: Same style, X-Axis labels container width `470px`.
   - Bars: Width `38px`. Colors, radius, and values same as mobile.
 
@@ -227,8 +227,8 @@ The chart implementation goes significantly beyond the static Figma spec. The fo
 - **Only visible on mobile** (`display: none` on desktop via global rule).
 - **Visual spec**:
   - Container: `36px x 36px`, Border Radius `12px` (`var(--radius-md)`), Background `#ffe6eb` (pink light tint).
-  - Icon (default state): `/icons/trash can.png`, `20px x 20px`.
-  - Icon (hover state): `/icons/white trash can.png`, `20px x 20px`.
+  - Icon (default state): `/icons/trash can.png`, `28px x 28px`.
+  - Icon (hover state): `/icons/white trash can.png`, `28px x 28px`.
   - Hover: Background changes to `Pink` (`#D92D6F`), default icon hidden, white icon shown.
 - **CSS classes**: `header-delete-mobile btn-icon-danger` (inherits the shared danger-icon style).
 - **HTML** (inside `<header>` in `HeaderComponent`):
@@ -243,8 +243,17 @@ The chart implementation goes significantly beyond the static Figma spec. The fo
 - **Placement**: Left side of the mobile `<header>`, opposite the delete button.
 - **Only visible on mobile** (`display: none` on desktop via global rule).
 - **Visual spec**:
-  - Container: `36px x 36px`, Border Radius `50%` (circular), Background transparent, No border.
-  - Icon: `/icons/user.png` (or equivalent), `24px x 24px`, no color filter.
+  - Container: `36px x 36px`, Border Radius `50%` (circular), Background `#ffe6eb` (pink light), No border.
+  - Icon: `/icons/user.png` (or equivalent), `28px x 28px` (object-fit: contain), no color filter.
+
+### 7d. Mobile Header Container (`.header`)
+- **Layout**: `display: flex`, row layout, `justify-content: space-between`, `align-items: center`.
+- **Spacing**: `padding: 20px 20px 16px 20px`. Uses negative margins (`-16px -16px 0 -16px`) to break out of the viewport padding and touch the edges. Height is `auto`.
+- **Styling**: Background `white`, bottom border `1px solid gray light`.
+
+### 7e. Header Trip Selector Text
+- **Trip Title**: Must use the `<h2 class="trip-selector-title">` tag. Font size `24px` (H2 equivalent), weight `700`, line-height `32px`, margin `0`.
+- **Trip Dates**: Must use the `<h3 class="trip-dates">` tag. Font size `16px` (Action B equivalent), weight `600`, color `gray dark`, `margin: 4px 0 0 0`.
 
 ### 8. Expense Item
 - **Variants**: `type=food`, `type=shopping`, `type=transportation`.
@@ -255,7 +264,9 @@ The chart implementation goes significantly beyond the static Figma spec. The fo
     - **`shopping`**: Background `purple light` (`#F3E9FB`), icon color `purple` (`#7E49A8`). Icon represents shopping bag (Phosphor: `ph ph-tag` or `ph ph-shopping-bag`).
     - **`transportation`**: Background `blue light` (`#F1F6FF`), icon color `blue` (`#5F7CB7`). Icon represents transportation (Phosphor: `ph ph-car` or `ph ph-bus`).
   - Text Labels (gap `0` / column):
-    - Title: Font `Body M` (Medium 14px), Color `black`, text represents name (e.g., "Mc Donnald's", "Compras", "Transporte").
+    - Title: Font `Body M` (Medium 14px), Color `black`, text represents name. 
+      - **Truncation**: Constrained to roughly 50% of the container (`max-width: 130px` on mobile, `220px` on desktop) using `white-space: nowrap`, `overflow: hidden`, `text-overflow: ellipsis`.
+      - **Tooltip**: Truncated names are wrapped in a `.expense-name-wrapper` container with `data-fullname`. Hovering (desktop) or tapping (mobile) displays a floating dark tag with the full text (`font-size: 12px`, `background: black`).
     - Subtitle: Font `Caption M` (Medium 12px), Color `gray dark` (`#9CA7BF`), text represents category label ("Alimentación", "Compras", "Transporte").
 - **Right Column**: Row layout, gap `8px`, items center.
   - Price text in Font `Body B` (Bold 14px), Color `black` (e.g., `- $30.00`).
@@ -271,6 +282,10 @@ The chart implementation goes significantly beyond the static Figma spec. The fo
       <img src="/icons/white trash can.png" alt="Eliminar" style="width: 20px; height: 20px;" class="trash-icon-hover" />
     </button>
     ```
+
+### 8b. Expenses List Container
+- **Header**: Contains the `<h3 class="card-title">Gastos registrados</h3>` title (`20px`, `700`).
+- **View All**: The "Ver todos" anchor link has been permanently removed from both the empty and populated states (it no longer exists in the UI).
 
 ### 9. Dropdown
 - **Structure**: Column container. Label at top, Dropdown box below.

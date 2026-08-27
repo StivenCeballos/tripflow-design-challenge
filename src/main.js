@@ -135,7 +135,7 @@ function attachEventListeners() {
   const closeTripDropdown = () => {
     if (tripDropdown) tripDropdown.classList.remove('open');
     if (tripBackdrop) tripBackdrop.classList.remove('open');
-    document.body.style.overflow = '';
+    unlockScroll();
   };
 
   if (tripBtn && tripDropdown) {
@@ -143,9 +143,10 @@ function attachEventListeners() {
       e.stopPropagation();
       const isOpen = tripDropdown.classList.toggle('open');
       if (tripBackdrop) tripBackdrop.classList.toggle('open', isOpen);
-      // Lock body scroll on mobile when sheet is open
-      if (window.innerWidth < 768) {
-        document.body.style.overflow = isOpen ? 'hidden' : '';
+      if (isOpen) {
+        lockScroll();
+      } else {
+        unlockScroll();
       }
     });
   }
@@ -641,6 +642,25 @@ function formatInputDate(dateStr) {
   const yy = String(dateObj.getFullYear()).slice(-2);
   return `${dayName} - ${dd}/${mm}/${yy}`;
 }
+// Handle Mobile Expense Tooltips globally
+document.addEventListener('click', (e) => {
+  const nameWrapper = e.target.closest('.expense-name-wrapper');
+  const allTooltips = document.querySelectorAll('.expense-name-wrapper.show-tooltip');
+  
+  if (nameWrapper) {
+    const isShowing = nameWrapper.classList.contains('show-tooltip');
+    // Close all open tooltips
+    allTooltips.forEach(el => el.classList.remove('show-tooltip'));
+    // Toggle the clicked one
+    if (!isShowing) {
+      nameWrapper.classList.add('show-tooltip');
+    }
+  } else {
+    // Click outside: close all tooltips
+    allTooltips.forEach(el => el.classList.remove('show-tooltip'));
+  }
+});
+
 
 // Boot up the application
 document.addEventListener('DOMContentLoaded', () => {

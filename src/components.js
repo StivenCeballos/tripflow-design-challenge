@@ -33,7 +33,7 @@ export function SidebarComponent(activeTab = 'resumen') {
       </div>
       <div class="sidebar-bottom">
         <div class="sidebar-user">
-          <div class="sidebar-avatar" style="background: transparent;">
+          <div class="sidebar-avatar">
             <img src="/icons/User.png" alt="User" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />
           </div>
           <span class="sidebar-username" title="David Ceballos">David Ceballos</span>
@@ -62,14 +62,14 @@ export function HeaderComponent(trip) {
       <div class="header-row">
         <div class="trip-selector-container">
           <button class="trip-selector-trigger" id="trip-selector-btn">
-            <span class="trip-selector-title">${trip.name}</span>
+            <h2 class="trip-selector-title">${trip.name}</h2>
             <span class="trip-selector-arrow"></span>
           </button>
           <div class="trip-bottom-sheet-backdrop" id="trip-sheet-backdrop"></div>
           <div class="trip-selector-dropdown" id="trip-dropdown">
             <!-- Dynamic trip options injected here -->
           </div>
-          <div class="trip-dates">${trip.dates}</div>
+          <h3 class="trip-dates">${trip.dates}</h3>
         </div>
         
         <div class="header-actions">
@@ -126,7 +126,7 @@ export function BudgetSummaryComponent(trip) {
       <div class="budget-alert" id="budget-warning-alert">
         <div class="alert-left">
           <img src="/icons/caution.png" alt="Precaución" class="alert-icon" />
-          <span class="alert-text">Estás muy cerca de tu límite. Te quedan <strong class="alert-critical">${availableStr} USD</strong> y <strong class="alert-critical">${daysRemaining} días</strong> de viaje.</span>
+          <span class="alert-text">Solo quedan <strong class="alert-critical">${availableStr} USD</strong> disponibles y todavía quedan <strong class="alert-critical">${daysRemaining} día(s)</strong> de viaje.</span>
         </div>
         <button class="alert-close-btn" id="close-alert-btn">
           <img src="/icons/Close.png" alt="Cerrar" class="alert-close-img" />
@@ -148,9 +148,9 @@ export function BudgetSummaryComponent(trip) {
           <div class="budget-progress-track">
             <div class="budget-progress-fill" style="width: ${spentPercentage}%"></div>
           </div>
-          <div class="budget-progress-text">
+          <h4 class="budget-progress-text">
             Has gastado <span>$${totalSpent.toFixed(0)}</span> de $${trip.totalBudget.toFixed(0)}
-          </div>
+          </h4>
           ${alertHtml}
         </div>
       </div>
@@ -283,7 +283,6 @@ export function ExpenseListComponent(trip) {
       <div class="expenses-card">
         <div class="expenses-header">
           <h3 class="card-title">Gastos registrados</h3>
-          <a href="#" class="expenses-view-all">Ver todos</a>
         </div>
         <div class="expense-empty-state">
           <i class="ph ph-info"></i>
@@ -321,7 +320,9 @@ export function ExpenseListComponent(trip) {
               <img src="${iconSrc}" alt="icon" style="width: 25px; height: 25px; object-fit: contain;" />
             </div>
             <div class="expense-info">
-              <span class="expense-name">${expense.name}</span>
+              <div class="expense-name-wrapper" data-fullname="${expense.name}">
+                <span class="expense-name-text">${expense.name}</span>
+              </div>
               <span class="expense-category-name">${expense.category}</span>
             </div>
           </div>
@@ -348,7 +349,6 @@ export function ExpenseListComponent(trip) {
     <div class="expenses-card">
       <div class="expenses-header">
         <h3 class="card-title">Gastos registrados</h3>
-        <a href="#" class="expenses-view-all">Ver todos</a>
       </div>
       <div class="expenses-list">
         ${groupsHtml}

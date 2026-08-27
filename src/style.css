@@ -197,7 +197,7 @@ select {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-circle);
-  background-color: var(--color-gray);
+  background-color: #ffe6eb;
   color: var(--color-gray-dark);
   display: flex;
   align-items: center;
@@ -264,10 +264,11 @@ select {
 }
 
 .trip-selector-title {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--color-black);
   line-height: 32px;
+  margin: 0;
 }
 
 .trip-selector-arrow {
@@ -360,10 +361,10 @@ select {
 }
 
 .trip-dates {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--color-gray-dark);
-  margin-top: 4px;
+  margin: 4px 0 0 0;
 }
 
 /* Bottom sheet header — hidden on desktop, visible on mobile via media query */
@@ -555,9 +556,10 @@ select {
 }
 
 .budget-progress-text {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-gray-dark);
+  margin: 0;
 }
 
 @media (min-width: 1025px) {
@@ -576,6 +578,7 @@ select {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   background-color: var(--color-red-light);
   border: 1px solid var(--color-red);
   border-radius: var(--radius-md);
@@ -592,14 +595,15 @@ select {
 }
 
 .alert-icon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
 }
 
 .alert-text {
-  font-size: 12px;
-  font-weight: 400;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
   color: var(--color-black);
 }
 
@@ -629,8 +633,8 @@ select {
   }
 
   .alert-icon {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
   }
 
   .alert-text {
@@ -900,10 +904,49 @@ select {
   flex-direction: column;
 }
 
-.expense-name {
+.expense-name-wrapper {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+}
+
+.expense-name-text {
   font-size: 14px;
   font-weight: 500;
   color: var(--color-black);
+  display: block;
+  max-width: 130px; /* Mobile half container approx */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 1025px) {
+  .expense-name-text {
+    max-width: 220px; /* Desktop half container approx */
+  }
+}
+
+/* Floating Tag / Tooltip */
+.expense-name-wrapper.show-tooltip::after,
+.expense-name-wrapper:hover::after {
+  content: attr(data-fullname);
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: var(--color-black);
+  color: var(--color-white);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: normal;
+  width: max-content;
+  max-width: 250px;
+  z-index: 100;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  margin-bottom: 6px;
+  pointer-events: none;
 }
 
 .expense-category-name {
@@ -936,20 +979,27 @@ select {
 /* Modal UI Component — Figma-matching design */
 .modal-overlay {
   position: fixed;
-  inset: 0; /* top: 0; right: 0; bottom: 0; left: 0 */
+  inset: 0;
   width: 100vw;
   height: 100vh;
   height: 100dvh;
   background-color: var(--shadow-overlay);
-  display: none;
+  /* Use opacity+visibility instead of display so CSS transitions work */
+  display: flex;
   align-items: center;
   justify-content: center;
   z-index: 3000;
   backdrop-filter: blur(2px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .modal-overlay.open {
-  display: flex;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 /* Figma modal: gray-light background, 12px radius, 20px 28px 24px padding */
@@ -963,6 +1013,11 @@ select {
   display: flex;
   flex-direction: column;
   gap: 0;
+  /* Animation runs only when modal opens — see .modal-overlay.open .modal-container */
+}
+
+/* Desktop: scale-up animation when opening */
+.modal-overlay.open .modal-container {
   animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -1244,6 +1299,7 @@ select {
 }
 
 .modal-cancel-btn {
+  box-sizing: border-box;
   height: 48px;
   padding: 8px 24px;
   border-radius: var(--radius-md);
@@ -1265,9 +1321,11 @@ select {
 }
 
 .modal-submit-btn {
+  box-sizing: border-box;
   flex: 1;
   height: 48px;
   padding: 8px 24px;
+  border: none;
   border-radius: var(--radius-md);
   font-size: 16px;
   font-weight: 600;
@@ -1393,8 +1451,12 @@ select {
     flex-direction: row !important;
     justify-content: space-between !important;
     align-items: center !important;
-    height: 64px !important;
-    padding: 0 16px !important;
+    height: auto !important;
+    padding: 20px 20px 16px 20px !important;
+    margin-top: -16px !important;
+    margin-left: -16px !important;
+    margin-right: -16px !important;
+    margin-bottom: 4px !important; /* 4px margin + 16px gap = 20px total spacing */
     box-shadow: none !important;
     border-bottom: 1px solid var(--color-gray-light);
     background-color: var(--color-white);
@@ -1404,7 +1466,7 @@ select {
     display: flex !important;
     width: 36px;
     height: 36px;
-    background-color: transparent !important;
+    background-color: #ffe6eb !important;
     border-radius: 50%;
     align-items: center;
     justify-content: center;
@@ -1413,8 +1475,8 @@ select {
   }
 
   .header-avatar-mobile img {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     object-fit: contain;
   }
 
@@ -1432,8 +1494,8 @@ select {
   }
 
   .header-delete-mobile img {
-    width: 20px;
-    height: 20px;
+    width: 28px;
+    height: 28px;
     object-fit: contain;
   }
 
@@ -1574,8 +1636,8 @@ select {
   }
 
   .trip-selector-title {
-    font-size: 20px !important;
-    line-height: 24px !important;
+    font-size: 24px !important;
+    line-height: 28px !important;
     color: var(--color-pink) !important;
   }
 
@@ -1587,15 +1649,15 @@ select {
   }
 
   .trip-dates {
-    font-size: 12px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
     color: var(--color-gray-dark) !important;
     margin-top: 2px !important;
-    font-weight: 400 !important;
   }
 
   /* Budget Summary (Component 3 mobile spec — Figma node 20-351) */
   .balance-card {
-    padding: 16px 20px;
+    padding: 0 0 16px 0;
     min-height: auto;
     gap: 0;
     display: flex;
@@ -1647,8 +1709,8 @@ select {
 
   .budget-progress-container {
     order: 3;
-    gap: 4px !important;
-    /* 4px between bar and subtext */
+    gap: 12px !important;
+    /* 12px between bar and subtext */
     margin-top: 0;
   }
 
@@ -1658,7 +1720,7 @@ select {
   }
 
   .budget-progress-text {
-    font-size: 14px !important;
+    font-size: 16px !important;
     font-weight: 700 !important;
     color: #9CA7BF !important;
   }
@@ -1676,12 +1738,12 @@ select {
   }
 
   .alert-icon {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
   }
 
   .alert-text {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .alert-close-btn {
@@ -1696,10 +1758,7 @@ select {
     gap: 12px;
   }
 
-  .chart-header h3 {
-    font-size: 16px;
-    /* H4 / Action B spec */
-  }
+
 
   .chart-bar {
     width: 28px;
@@ -1821,6 +1880,12 @@ select {
     display: none !important;
   }
 
+  /* Robust scroll lock for mobile */
+  html:has(body.modal-open),
+  body.modal-open {
+    overflow: hidden !important;
+  }
+
   /* === Modals → Bottom Sheets on Mobile === */
   .modal-overlay {
     align-items: flex-end !important;
@@ -1841,18 +1906,18 @@ select {
     transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     /* Cap height — use dvh so virtual keyboard is accounted for */
-    max-height: 85dvh;
-    max-height: 85vh; /* fallback */
+    max-height: 92dvh;
+    max-height: 92vh; /* fallback */
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     overflow: hidden; /* prevent outer scroll; inner body scrolls */
   }
 
-  /* Slide-up when overlay is open */
+  /* Slide-up when overlay is open — pure transition, same as trip selector */
   .modal-overlay.open .modal-container {
     transform: translateY(0);
-    animation: slideUpSheet 0.38s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: none !important; /* cancel desktop scaleUp */
   }
 
   /* Drag handle */
@@ -1886,6 +1951,13 @@ select {
     padding: 16px 0 max(24px, env(safe-area-inset-bottom, 24px));
     border-top: 1px solid var(--color-gray-light);
     margin-top: 0;
+    flex-direction: column-reverse;
+  }
+  
+  .modal-cancel-btn,
+  .modal-submit-btn {
+    width: 100%;
+    flex: none;
   }
 
   /* Modal header pinned at top */
@@ -1905,6 +1977,11 @@ select {
 
   .form-currency-group {
     width: 100% !important;
+  }
+
+  /* Reserve exact space for the absolute dropdown (128px tall) so it fits perfectly */
+  .category-selector {
+    margin-bottom: 128px;
   }
 }
 
