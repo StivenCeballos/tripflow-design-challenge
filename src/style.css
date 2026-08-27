@@ -72,7 +72,8 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
-input, select {
+input,
+select {
   font-family: var(--font-family);
   outline: none;
   transition: var(--transition-normal);
@@ -595,10 +596,12 @@ input, select {
   .budget-alert {
     padding: 12px 16px;
   }
+
   .alert-icon {
     width: 36px;
     height: 36px;
   }
+
   .alert-text {
     font-size: 14px;
     font-weight: 500;
@@ -850,10 +853,12 @@ input, select {
   background-color: var(--color-yellow-light);
   color: var(--color-yellow);
 }
+
 .category-shopping {
   background-color: var(--color-purple-light);
   color: var(--color-purple);
 }
+
 .category-transportation {
   background-color: var(--color-blue-light);
   color: var(--color-blue);
@@ -1293,6 +1298,7 @@ input, select {
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1304,6 +1310,7 @@ input, select {
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -1315,24 +1322,28 @@ input, select {
 .header-avatar-mobile,
 .header-delete-mobile,
 .mobile-fab-btn {
-  display: none !important; /* Hidden by default on desktop */
+  display: none !important;
+  /* Hidden by default on desktop */
 }
 
 @media (max-width: 768px) {
+
   /* Layout changes */
   .app-container {
     flex-direction: column;
     min-height: 100vh;
   }
-  
+
   .sidebar {
-    display: none !important; /* Hide desktop sidebar */
+    display: none !important;
+    /* Hide desktop sidebar */
   }
-  
+
   .main-content {
     height: auto;
     overflow-y: visible;
-    padding-bottom: 80px; /* Leave room for bottom navbar */
+    padding-bottom: 120px;
+    /* 64px navbar + 48px FAB + 8px clearance */
   }
 
   .dashboard-viewport {
@@ -1422,7 +1433,7 @@ input, select {
     z-index: 2000 !important;
     width: 90vw !important;
     max-width: 320px !important;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
     margin-top: 8px !important;
     border-radius: var(--radius-sm);
   }
@@ -1462,62 +1473,79 @@ input, select {
     font-weight: 400 !important;
   }
 
-  /* Budget Summary (Component 3 mobile spec) */
+  /* Budget Summary (Component 3 mobile spec — Figma node 20-351) */
   .balance-card {
-    padding: 16px;
+    padding: 16px 20px;
     min-height: auto;
-    gap: 16px;
+    gap: 0;
     display: flex;
     flex-direction: column;
+    background-color: var(--color-gray-light) !important;
+    /* #F7F8FA flat bg, no shadow */
+    box-shadow: none !important;
+    border-radius: var(--radius-md) !important;
   }
 
   .balance-card .card-title {
-    display: none !important; /* Hide Balance only */
-  }
-
-  .expenses-view-all {
-    font-size: 12px !important;
+    display: none !important;
+    /* Hide "Balance" title */
   }
 
   .budget-summary {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-  }
-
-  .budget-available-title {
-    order: 2; /* Put it below the amount */
-    font-size: 16px !important;
-    color: var(--color-black) !important;
-    font-weight: 600 !important;
-    margin-top: 8px !important; /* gap between value and title */
+    gap: 0;
   }
 
   .budget-available-amount {
-    order: 1; /* Put it at the top */
+    order: 1;
+    /* Amount first */
     font-size: 40px !important;
     font-weight: 700 !important;
-    line-height: 36px !important;
+    line-height: 1 !important;
     color: var(--color-black) !important;
+    margin-bottom: 4px !important;
   }
 
   .budget-available-amount span {
-    color: var(--color-gray) !important; /* Decimals .00 in color gray */
+    color: #9CA7BF !important;
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    vertical-align: baseline !important;
+  }
+
+  .budget-available-title {
+    order: 2;
+    /* Label below amount */
+    font-size: 14px !important;
+    color: var(--color-black) !important;
+    /* #2B2B2B */
+    font-weight: 500 !important;
+    margin-top: 0 !important;
+    margin-bottom: 12px !important;
   }
 
   .budget-progress-container {
     order: 3;
-    gap: 4px !important; /* Figma progress indicator group gap 4px */
-    margin-top: 4px;
+    gap: 4px !important;
+    /* 4px between bar and subtext */
+    margin-top: 0;
   }
 
   .budget-progress-track {
-    height: 6px; /* Component 3 mobile spec */
+    height: 12px !important;
+    background-color: var(--color-gray) !important;
   }
 
   .budget-progress-text {
-    font-size: 14px !important; /* Body B 14px Bold */
+    font-size: 14px !important;
     font-weight: 700 !important;
+    color: #9CA7BF !important;
+  }
+
+
+  .expenses-view-all {
+    font-size: 12px !important;
   }
 
   /* Alert platform=mobile spec (Component 5) */
@@ -1549,11 +1577,13 @@ input, select {
   }
 
   .chart-header h3 {
-    font-size: 16px; /* H4 / Action B spec */
+    font-size: 16px;
+    /* H4 / Action B spec */
   }
 
   .chart-bar {
-    width: 28px; /* Component 6 mobile spec */
+    width: 28px;
+    /* Component 6 mobile spec */
   }
 
   .chart-scroll-inner {
@@ -1561,9 +1591,10 @@ input, select {
     grid-template-rows: repeat(6, 28px) 20px;
     row-gap: 6px;
   }
-  
+
   .chart-bar-container .chart-bar {
-    bottom: 14px; /* Align to the center of Row 6 (28px / 2 = 14px) */
+    bottom: 14px;
+    /* Align to the center of Row 6 (28px / 2 = 14px) */
   }
 
   /* Mobile Bottom Navbar (Component 7) */
@@ -1624,7 +1655,8 @@ input, select {
   .mobile-fab-btn {
     display: flex !important;
     position: fixed;
-    bottom: 80px; /* Above the mobile navbar */
+    bottom: 80px;
+    /* Above the mobile navbar */
     left: 16px;
     right: 16px;
     width: calc(100% - 32px) !important;
@@ -1645,13 +1677,13 @@ input, select {
     cursor: pointer;
     transition: var(--transition-normal);
   }
-  
+
   .mobile-fab-btn:hover {
     background-color: #be205f;
     transform: translateY(-1px);
     box-shadow: 0 6px 16px rgba(217, 45, 111, 0.5);
   }
-  
+
   .mobile-fab-btn:active {
     transform: translateY(0);
   }
@@ -1659,9 +1691,10 @@ input, select {
   .mobile-fab-btn img {
     width: 16px;
     height: 16px;
-    filter: brightness(0) invert(1); /* makes plus icon white */
+    filter: brightness(0) invert(1);
+    /* makes plus icon white */
   }
-  
+
   /* Modals responsiveness */
   .modal-container {
     width: 92%;
@@ -1669,16 +1702,16 @@ input, select {
     margin: 16px auto;
     padding: 16px;
   }
-  
+
   .modal-fields {
     gap: 16px;
   }
-  
+
   .form-row {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .form-row .form-group {
     flex: none !important;
     width: 100%;
