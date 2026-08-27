@@ -1,4 +1,5 @@
 // UI Component Library for Tripflow based on Figma specifications
+import { parseTripBound } from './data.js';
 
 /**
  * Renders the Sidebar Navigation
@@ -96,11 +97,26 @@ export function BudgetSummaryComponent(trip) {
   const [availInt, availDec] = availableStr.split('.');
   let alertHtml = '';
   if (spentPercentage >= 80) {
+    let daysRemaining = 0;
+    if (trip.dates) {
+      const bounds = trip.dates.split(' a ');
+      const tripEnd = bounds.length > 1 ? parseTripBound(bounds[1]) : parseTripBound(bounds[0]);
+      if (tripEnd.getTime() > 0) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        tripEnd.setHours(0, 0, 0, 0);
+        const diffTime = tripEnd.getTime() - today.getTime();
+        if (diffTime > 0) {
+          daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+      }
+    }
+    
     alertHtml = `
       <div class="budget-alert" id="budget-warning-alert">
         <div class="alert-left">
           <img src="/icons/caution.png" alt="Precaución" class="alert-icon" />
-          <span class="alert-text">Estás muy cerca de tu límite. Te quedan <strong class="alert-critical">${availableStr} USD</strong>.</span>
+          <span class="alert-text">Estás muy cerca de tu límite. Te quedan <strong class="alert-critical">${availableStr} USD</strong> y <strong class="alert-critical">${daysRemaining} días</strong> de viaje.</span>
         </div>
         <button class="alert-close-btn" id="close-alert-btn">
           <img src="/icons/Close.png" alt="Cerrar" class="alert-close-img" />
