@@ -2,6 +2,8 @@
 
 Tripflow es una aplicación web moderna diseñada para la administración, control y visualización de presupuestos y gastos de viajes. Está construida bajo una arquitectura *Vanilla Web* enfocada al altísimo rendimiento y una experiencia de usuario sumamente fluida e interactiva.
 
+Puedes ver una versión demo en vivo aquí: https://tripflow-design-challenge.vercel.app
+
 ## Características Principales
 
 - **Diseño Mobile-first y Responsive**: Interfaces adaptables inspiradas en las mejores prácticas de Figma, brindando una experiencia "App-like" desde el navegador.
