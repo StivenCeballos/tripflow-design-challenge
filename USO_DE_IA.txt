@@ -1,0 +1,24 @@
+# Documentación del Uso de Inteligencia Artificial (IA) en Tripflow
+
+Durante el desarrollo de Tripflow, la Inteligencia Artificial (específicamente un modelo agentico como Pair-Programmer) fue utilizada como una herramienta de apoyo integral en las siguientes áreas clave:
+
+## 1. Traducción de Diseño (Figma a Código)
+- **Extracción de Tokens**: La IA analizó las especificaciones visuales provenientes de Figma para generar un sistema de diseño escalable y preciso basado en CSS Custom Properties (Variables).
+- **Pixel Perfect UI**: Se utilizó la IA para calcular márgenes, rellenos, sombras y jerarquías tipográficas, asegurando que el prototipo web coincidiera milimétricamente con el diseño móvil y de escritorio original.
+
+## 2. Arquitectura de Software Vanilla
+- **Evitar Frameworks Pesados**: Se le instruyó a la IA construir todo el prototipo de manera completamente funcional utilizando únicamente Vanilla JavaScript, HTML5 y CSS3, descartando frameworks como React o Vue.
+- **Gestión de Estado**: La IA diseñó el patrón de renderizado dinámico (`renderApp`) que simula la reactividad, inyectando de forma eficiente componentes actualizados en el DOM basándose en el estado de localStorage.
+
+## 3. Algoritmos y Lógica Compleja (Gráfico Dinámico)
+El componente más avanzado del proyecto, el gráfico de gastos diarios, fue desarrollado en pareja con la IA:
+- **Ejes Dinámicos**: Se programó a la IA para escribir un algoritmo matemático que calcula automáticamente las escalas del eje Y dependiendo del gasto más alto (`niceStep`).
+- **Lógica de Scroll y Animación**: La IA diseñó un algoritmo de suavizado personalizado (`requestAnimationFrame` con una curva matemática `easeInOutCubic`) para generar un scroll cinemático e inyectar resaltado de barras que guía la vista del usuario al registrar un nuevo gasto.
+- **Enmascaramiento CSS Grid**: Resolvió el problema técnico complejo de desbordamiento (overflow) combinando CSS Grid con contenedores adhesivos (`position: sticky`) que funcionan como "muros de contención" ocultando sutilmente las barras.
+
+## 4. Debugging, Pruebas Iterativas y Resolución de Errores
+- **Refactorización de Datos**: Cuando los datos "duros" ("Hoy") rompían los cálculos temporales en el sistema de guardado, la IA diagnosticó y migró el modelo de datos hacia objetos de Fecha absolutos manteniendo la presentación amigable.
+- **Correcciones Visuales**: La IA ayudó a parchear filtraciones sub-pixel en el desplazamiento y comportamientos inesperados de los contenedores Flex y Grid (evitando que el contenedor general se desbordara en dispositivos móviles).
+
+## Conclusión
+La Inteligencia Artificial no reemplazó la toma de decisiones arquitectónicas ni de producto; actuó como un co-piloto técnico de alto rendimiento. Permitió acelerar exponencialmente la redacción de código repetitivo (como CSS y plantillas HTML), resolver problemas matemáticos de layout rápidamente, y alcanzar estándares de código *Vanilla Web* que normalmente exigirían la importación masiva de múltiples librerías externas de gráficos y animaciones.
